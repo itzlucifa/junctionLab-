@@ -9,6 +9,12 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![No dependencies](https://img.shields.io/badge/dependencies-0-green)](package.json)
 
+## 🚀 Live Project
+
+**[Click here to view JunctionLab in action →](https://junctionlab.netlify.app/)**
+
+---
+
 ## About`r`n`r`nA four-way signalised junction you can watch, break and argue with — fixed-time, Webster-calculated and
 adaptive signal control competing for the same vehicles, in **one dependency-free HTML file**.
 
@@ -139,13 +145,8 @@ Deliberate scope choices, not bugs:
 - **No pedestrians, cyclists on the carriageway, or on-street parking.** The zebra crossings are scenery.
 - **A junction, not a network.** Progression between adjacent signals is exactly the thing this model cannot show.
 
-## Credits and licence
+## Creator & License
 
-Original work. No code was copied from other projects. The car-following idea follows the
-**Intelligent Driver Model** of Treiber, Hennecke and Helbing (*Transportation Research Record* 1710, 2000),
-reimplemented here from the published formulation. The open-source simulator
-[movsim/traffic-simulation-de](https://github.com/movsim/traffic-simulation-de) is **GPL-3.0**; it was
-studied for ideas only and nothing from it is incorporated, which is what keeps this repository MIT.
+**Created by:** Sumit Nawale & Nayan Dudkekar
 
-Released under the [MIT License](LICENSE). See [CHANGELOG.md](CHANGELOG.md) for release history and
-[CONTRIBUTING.md](CONTRIBUTING.md) if you want to change something.
+**License:** [MIT License](LICENSE)
