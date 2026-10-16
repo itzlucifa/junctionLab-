@@ -10,10 +10,10 @@ adaptive signal control competing for the same vehicles, in **one dependency-fre
 
 [![CI](https://github.com/itzlucifa/junctionLab-/actions/workflows/ci.yml/badge.svg)](https://github.com/itzlucifa/junctionLab-/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Live demo](https://img.shields.io/badge/demo-GitHub%20Pages-blue)](https://itzlucifa.github.io/junctionLab-/)
+[![Live demo](https://img.shields.io/badge/demo-GitHub%20Pages-blue)](https://junctionlab.netlify.app/)
 [![No dependencies](https://img.shields.io/badge/dependencies-0-green)](package.json)
 
-**[Open the live demo →](https://itzlucifa.github.io/junctionLab-/)**
+**[Open the live demo →](https://junctionlab.netlify.app/)**
 No install, no account, no network calls. It runs entirely in your browser tab.
 
 ---
