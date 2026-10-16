@@ -920,8 +920,8 @@ function draw2d(v){
 }
 
 /* ---------- 3D perspective view (software renderer, no WebGL, no CDN) ---------- */
-const V3 = {fov: 960, near: 1.5, eye: {x: C + 720, y: 700, z: C + 720}, cx: C, cy: C, blockH: 190};
-const CAR_H = {bike: 13, car: 19, auto: 21, bus: 29, amb: 23};
+  const V3 = {fov: 1100, near: 0.8, eye: {x: C + 820, y: 640, z: C + 820}, cx: C, cy: C, blockH: 210};
+  const CAR_H = {bike: 12, car: 18, auto: 20, bus: 27, amb: 22};
 function cam3d(){
   const e = V3.eye;
   let fx = V3.cx - e.x, fy = 0 - e.y, fz = V3.cy - e.z, n = Math.sqrt(fx * fx + fy * fy + fz * fz);
@@ -968,85 +968,87 @@ function laneQuad(dir, s1, s2, o1, o2){
   return [{x: a.x, y: 0, z: a.y}, {x: b.x, y: 0, z: b.y}, {x: c.x, y: 0, z: c.y}, {x: d.x, y: 0, z: d.y}];
 }
 function addCar(c){
-  const dir = c.dir, len = c.len, wid = c.wid, h = CAR_H[c.type] || 19;
-  const col = c.col || '#ffffff';
-  const sf = c.s, sb = c.s - len, ll = c.off - wid / 2, lr = c.off + wid / 2;
-  const B00 = worldPt(dir, sb, ll, 0), B10 = worldPt(dir, sb, lr, 0);
-  const B01 = worldPt(dir, sf, ll, 0), B11 = worldPt(dir, sf, lr, 0);
-  const T00 = worldPt(dir, sb, ll, h), T10 = worldPt(dir, sb, lr, h);
-  const T01 = worldPt(dir, sf, ll, h), T11 = worldPt(dir, sf, lr, h);
-  pushFace([T01, T11, T10, T00], col);
-  pushFace([B01, B11, T11, T01], shade(col, 0.8));
-  pushFace([B00, B10, T10, T00], shade(col, 0.6));
-  pushFace([B00, B01, T01, T00], shade(col, 0.65));
-  pushFace([B11, B10, T10, T11], shade(col, 0.65));
-}
+    const dir = c.dir, len = c.len, wid = c.wid, h = CAR_H[c.type] || 18;
+    const col = c.col || '#ffffff';
+    const sf = c.s, sb = c.s - len, ll = c.off - wid / 2, lr = c.off + wid / 2;
+    const B00 = worldPt(dir, sb, ll, 0), B10 = worldPt(dir, sb, lr, 0);
+    const B01 = worldPt(dir, sf, ll, 0), B11 = worldPt(dir, sf, lr, 0);
+    const T00 = worldPt(dir, sb, ll, h), T10 = worldPt(dir, sb, lr, h);
+    const T01 = worldPt(dir, sf, ll, h), T11 = worldPt(dir, sf, lr, h);
+    pushFace([T01, T11, T10, T00], col);
+    pushFace([B01, B11, T11, T01], shade(col, 0.72));
+    pushFace([B00, B10, T10, T00], shade(col, 0.55));
+    pushFace([B00, B01, T01, T00], shade(col, 0.6));
+    pushFace([B11, B10, T10, T11], shade(col, 0.6));
+  }
 function addSignal(ctx, dir, lamp){
-  const p = pos(dir, STOP - 6, HALF + 16), px = p.x, pz = p.y;
-  pushFace([{x: px - 3, y: 0, z: pz - 1}, {x: px + 3, y: 0, z: pz + 1}, {x: px + 3, y: 150, z: pz + 1}, {x: px - 3, y: 150, z: pz - 1}], '#1c242c');
-  const lamps = [['R', 112, '#FF6268'], ['Y', 142, '#FFBD59'], ['G', 172, '#36D98A']];
-  for(const [k, y, col] of lamps){
-    const pr = project3d({x: px, y, z: pz});
-    if(!pr) continue;
-    const r = 5.5 * V3.fov / pr.z * K;
-    ctx.beginPath(); ctx.arc(pr.x, pr.y, r, 0, 7);
-    ctx.fillStyle = lamp === k ? col : '#1c242c'; ctx.fill();
-    ctx.strokeStyle = '#4a5764'; ctx.lineWidth = 1 / K; ctx.stroke();
+    const p = pos(dir, STOP - 6, HALF + 16), px = p.x, pz = p.y;
+    pushFace([{x: px - 3, y: 0, z: pz - 1}, {x: px + 3, y: 0, z: pz + 1}, {x: px + 3, y: 150, z: pz + 1}, {x: px - 3, y: 150, z: pz - 1}], '#1c242c');
+    const lamps = [['R', 112, '#FF6268'], ['Y', 142, '#FFBD59'], ['G', 172, '#36D98A']];
+    for(const [k, y, col] of lamps){
+      const pr = project3d({x: px, y, z: pz});
+      if(!pr) continue;
+      const r = 6 * V3.fov / pr.z * K;
+      ctx.beginPath(); ctx.arc(pr.x, pr.y, r, 0, 7);
+      ctx.fillStyle = lamp === k ? col : '#1c242c'; ctx.fill();
+      if(lamp === k){ ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2 / K; }
+      else { ctx.strokeStyle = '#3a4651'; ctx.lineWidth = 1 / K; }
+      ctx.stroke();
+    }
   }
-}
 function draw3d(v){
-  const ctx = v.ctx, sim = v.sim;
-  ctx.setTransform(K, 0, 0, K, 0, 0);
-  ctx.fillStyle = '#0a0e13'; ctx.fillRect(0, 0, W, W);
-  V3.m = cam3d();
-  f3d.length = 0;
-  pushFace([{x: -400, y: 0, z: -400}, {x: 1160, y: 0, z: -400}, {x: 1160, y: 0, z: 1160}, {x: -400, y: 0, z: 1160}], '#060607');
-  groundRect(C - HALF, -260, C + HALF, W + 260, '#2a2f36');
-  groundRect(-260, C - HALF, W + 260, C + HALF, '#2a2f36');
-  groundRect(C - 2, -260, C + 2, W + 260, 'rgba(242, 194, 48, 0.55)');
-  groundRect(-260, C - 2, W + 260, C + 2, 'rgba(242, 194, 48, 0.55)');
-  groundRect(BOX_S, BOX_S, BOX_E, BOX_E, '#30363f');
-  DIRS.forEach(d => {
-    for(let lat = -HALF; lat < HALF; lat += 12) pushFace(laneQuad(d, STOP + 7, STOP + 23, lat, lat + 6), 'rgba(240, 240, 240, 0.9)');
-    pushFace(laneQuad(d, STOP - 1, STOP + 3, 0, HALF), '#ffffff');
-  });
-  const blocks = [
-    [4, 4, C - HALF - 4, C - HALF - 4, '#1b242d'],
-    [C + HALF + 4, 4, W - 4, C - HALF - 4, '#33404c'],
-    [4, C + HALF + 4, C - HALF - 4, W - 4, '#3a3a46'],
-    [C + HALF + 4, C + HALF + 4, W - 4, W - 4, '#2a3340']
-  ];
-  blocks.forEach(([x1, z1, x2, z2, col]) => {
-    const h = V3.blockH;
-    pushFace([{x: x1, y: h, z: z1}, {x: x2, y: h, z: z1}, {x: x2, y: h, z: z2}, {x: x1, y: h, z: z2}], col);
-    pushFace([{x: x1, y: 0, z: z1}, {x: x1, y: 0, z: z2}, {x: x1, y: h, z: z2}, {x: x1, y: h, z: z1}], shade(col, 0.7));
-    pushFace([{x: x2, y: 0, z: z1}, {x: x2, y: h, z: z1}, {x: x2, y: h, z: z2}, {x: x2, y: 0, z: z2}], shade(col, 0.7));
-    pushFace([{x: x1, y: 0, z: z1}, {x: x2, y: 0, z: z1}, {x: x2, y: h, z: z1}, {x: x1, y: h, z: z1}], shade(col, 0.7));
-    pushFace([{x: x1, y: 0, z: z2}, {x: x2, y: h, z: z2}, {x: x2, y: 0, z: z2}, {x: x1, y: 0, z: z2}], shade(col, 0.7));
-  });
-  for(const d of DIRS){ const lane = sim.cars[d]; for(let i = lane.length - 1; i >= 0; i--) addCar(lane[i]); }
-  for(const d of DIRS) for(const a of sim.amb[d]) addCar(a);
-  DIRS.forEach(d => addSignal(ctx, d, sim.lamp(AXIS[d])));
-  if(sim.ambDir && cfg.corridor){
-    const pulse = reduceMotion.matches ? 0.22 : 0.18 + 0.10 * Math.sin(sim.t * 6);
-    const q = laneQuad(sim.ambDir, 0, W, 0, HALF).map(project3d);
-    if(q.every(p => p)){ ctx.fillStyle = 'rgba(61, 220, 132,' + pulse * 0.5 + ')'; poly(ctx, q); ctx.fill(); }
+    const ctx = v.ctx, sim = v.sim;
+    ctx.setTransform(K, 0, 0, K, 0, 0);
+    ctx.fillStyle = '#020305'; ctx.fillRect(0, 0, W, W);
+    V3.m = cam3d();
+    f3d.length = 0;
+    pushFace([{x: -500, y: 0, z: -500}, {x: 1260, y: 0, z: -500}, {x: 1260, y: 0, z: 1260}, {x: -500, y: 0, z: 1260}], '#020305');
+    groundRect(C - HALF, -300, C + HALF, W + 300, '#1a1d22');
+    groundRect(-300, C - HALF, W + 300, C + HALF, '#1a1d22');
+    groundRect(C - 2, -300, C + 2, W + 300, 'rgba(255,189,89,0.5)');
+    groundRect(-300, C - 2, W + 300, C + 2, 'rgba(255,189,89,0.5)');
+    groundRect(BOX_S, BOX_S, BOX_E, BOX_E, '#23272e');
+    DIRS.forEach(d => {
+      for(let lat = -HALF; lat < HALF; lat += 12) pushFace(laneQuad(d, STOP + 7, STOP + 23, lat, lat + 6), 'rgba(240,240,240,0.92)');
+      pushFace(laneQuad(d, STOP - 1, STOP + 3, 0, HALF), '#ffffff');
+    });
+    const blocks = [
+      [4, 4, C - HALF - 4, C - HALF - 4, '#243040'],
+      [C + HALF + 4, 4, W - 4, C - HALF - 4, '#2c3a4a'],
+      [4, C + HALF + 4, C - HALF - 4, W - 4, '#2a3340'],
+      [C + HALF + 4, C + HALF + 4, W - 4, W - 4, '#23303a']
+    ];
+    blocks.forEach(([x1, z1, x2, z2, col]) => {
+      const h = V3.blockH;
+      pushFace([{x: x1, y: h, z: z1}, {x: x2, y: h, z: z1}, {x: x2, y: h, z: z2}, {x: x1, y: h, z: z2}], col);
+      pushFace([{x: x1, y: 0, z: z1}, {x: x1, y: 0, z: z2}, {x: x1, y: h, z: z2}, {x: x1, y: h, z: z1}], shade(col, 0.65));
+      pushFace([{x: x2, y: 0, z: z1}, {x: x2, y: h, z: z1}, {x: x2, y: h, z: z2}, {x: x2, y: 0, z: z2}], shade(col, 0.65));
+      pushFace([{x: x1, y: 0, z: z1}, {x: x2, y: 0, z: z1}, {x: x2, y: h, z: z1}, {x: x1, y: h, z: z1}], shade(col, 0.55));
+      pushFace([{x: x1, y: 0, z: z2}, {x: x2, y: h, z: z2}, {x: x2, y: 0, z: z2}, {x: x1, y: 0, z: z2}], shade(col, 0.55));
+    });
+    for(const d of DIRS){ const lane = sim.cars[d]; for(let i = lane.length - 1; i >= 0; i--) addCar(lane[i]); }
+    for(const d of DIRS) for(const a of sim.amb[d]) addCar(a);
+    DIRS.forEach(d => addSignal(ctx, d, sim.lamp(AXIS[d])));
+    if(sim.ambDir && cfg.corridor){
+      const pulse = reduceMotion.matches ? 0.22 : 0.18 + 0.10 * Math.sin(sim.t * 6);
+      const q = laneQuad(sim.ambDir, 0, W, 0, HALF).map(project3d);
+      if(q.every(p => p)){ ctx.fillStyle = 'rgba(54,217,132,' + pulse * 0.5 + ')'; poly(ctx, q); ctx.fill(); }
+    }
+    f3d.sort((a, b) => b.z - a.z);
+    for(const f of f3d){
+      ctx.fillStyle = f.color; poly(ctx, f.pts); ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 0.8 / K; poly(ctx, f.pts); ctx.stroke();
+    }
+    if(sim.ambDir){
+      const txt = cfg.corridor ? 'AMBULANCE 108 · GREEN CORRIDOR · ' + NAMES[sim.ambDir].toUpperCase()
+                               : 'AMBULANCE 108 · NO CORRIDOR · ' + NAMES[sim.ambDir].toUpperCase();
+      ctx.font = '800 15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      const tw = ctx.measureText(txt).width + 24;
+      ctx.fillStyle = 'rgba(8, 11, 14, 0.9)'; rr(ctx, C - tw / 2, 34, tw, 28, 9); ctx.fill();
+      ctx.strokeStyle = cfg.corridor ? '#36D98A' : '#FFBD59'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = '#ffffff'; ctx.fillText(txt, C, 49);
+    }
   }
-  f3d.sort((a, b) => b.z - a.z);
-  for(const f of f3d){
-    ctx.fillStyle = f.color; poly(ctx, f.pts); ctx.fill();
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)'; ctx.lineWidth = 1 / K; poly(ctx, f.pts); ctx.stroke();
-  }
-  if(sim.ambDir){
-    const txt = cfg.corridor ? 'AMBULANCE 108 · GREEN CORRIDOR · ' + NAMES[sim.ambDir].toUpperCase()
-                             : 'AMBULANCE 108 · NO CORRIDOR · ' + NAMES[sim.ambDir].toUpperCase();
-    ctx.font = '800 15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    const tw = ctx.measureText(txt).width + 24;
-    ctx.fillStyle = 'rgba(8, 11, 14, 0.9)'; rr(ctx, C - tw / 2, 34, tw, 28, 9); ctx.fill();
-    ctx.strokeStyle = cfg.corridor ? '#3ddc84' : '#ffbf3c'; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = '#ffffff'; ctx.fillText(txt, C, 49);
-  }
-}
 
 /* ---------- DOM ---------- */
 const $ = id => document.getElementById(id);
