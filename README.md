@@ -9,9 +9,6 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![No dependencies](https://img.shields.io/badge/dependencies-0-green)](package.json)
 
----![JunctionLab UI Preview](preview.png)
-
-> **JunctionLab** — A modern, interactive traffic signal simulation built for research, learning, and experimentation.
 ## About`r`n`r`nA four-way signalised junction you can watch, break and argue with — fixed-time, Webster-calculated and
 adaptive signal control competing for the same vehicles, in **one dependency-free HTML file**.
 
