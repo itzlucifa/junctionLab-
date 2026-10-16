@@ -51,7 +51,7 @@
 main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;padding:20px 24px 20px;width:100%}
   @media (max-width:1000px){main{grid-template-columns:1fr;padding:12px 16px}}
   aside{margin-left:8px}
-  .simbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin:0 auto;max-width:860px}
+  .simbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin:0 auto;max-width:980px}
   .simbox figcaption{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:10px}
   .simbox figcaption strong{font-size:15px;font-weight:700}
   .chip{display:inline-block;padding:2px 9px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);font-size:12px;color:var(--muted)}
@@ -226,7 +226,7 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;padding:20p
 const DIRS = ['N','E','S','W'];
 const AXIS = {N:0, S:0, E:1, W:1};          // 0 = north-south pair, 1 = east-west pair
 const NAMES = {N:'North', E:'East', S:'South', W:'West'};
-const W = 860, C = 430, HALF = 40, ZEBRA = 26;
+const W = 980, C = 490, HALF = 40, ZEBRA = 26;
 const STOP  = C - HALF - ZEBRA;             // stop line, measured along the lane from the screen edge
 const BOX_S = C - HALF, BOX_E = C + HALF;   // junction box entry / exit
 const S0 = 7, TGAP = 0.9, BCOMF = 110, BMAX = 220, DT = 1/60, WAIT_V = 8, LATV = 70;
