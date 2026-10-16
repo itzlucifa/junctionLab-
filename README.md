@@ -2,16 +2,12 @@
 
 ![JunctionLab UI Preview](preview.png)
 
-> *Created by **Sumit Nawale** & **Nayan Dudkekar***
+> *Crafted with precision by **Sumit Nawale** & **Nayan Dudkekar***
 
-[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-Visit%20Now-brightgreen?style=for-the-badge)](https://junctionlab.netlify.app/)
-[![CI](https://github.com/itzlucifa/junctionLab-/actions/workflows/ci.yml/badge.svg)](https://github.com/itzlucifa/junctionLab-/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![No dependencies](https://img.shields.io/badge/dependencies-0-green)](package.json)
-
-## 🚀 Live Project
-
-**[Click here to view JunctionLab in action →](https://junctionlab.netlify.app/)**
+[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-Open%20Project-brightgreen?style=for-the-badge)](https://junctionlab.netlify.app/)
+[![Built with JavaScript](https://img.shields.io/badge/Built%20with%20Vanilla%20JS-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![No Dependencies](https://img.shields.io/badge/Zero%20Dependencies-✓-blue?style=for-the-badge)](https://github.com/itzlucifa/junctionLab-)
+[![MIT License](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
 ---
 
