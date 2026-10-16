@@ -1,0 +1,1006 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JunctionLab</title>
+<style>
+:root{
+  --bg:#0e1319; --panel:#161d25; --panel2:#1d2630; --line:#2c3743;
+  --text:#eef2f6; --muted:#a3b0bd; --amber:#f5b83d; --green:#46e08c; --red:#ff6b6b; --blue:#6cb6ff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans Devanagari",sans-serif}
+button,select,input{font:inherit;color:inherit}
+header.top{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between;padding:14px 22px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#141b23,#0e1319)}
+.brand h1{margin:0;font-size:22px;letter-spacing:.2px}
+.brand h1 small{font-weight:500;color:var(--amber);margin-left:8px;font-size:18px}
+.brand p{margin:2px 0 0;color:var(--muted);font-size:13px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.seg button{background:none;border:0;padding:9px 16px;cursor:pointer;color:var(--muted);font-weight:600}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--amber);color:#1a1405}
+.seg button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.ctrls{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.btn{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:9px 16px;cursor:pointer;font-weight:600}
+.btn:hover{border-color:#41505f}
+.btn.primary{background:var(--amber);color:#1a1405;border-color:var(--amber)}
+.btn.danger{background:#3a1d22;border-color:#6a2c35;color:#ffd5d8}
+main{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:18px;padding:18px 22px 10px;max-width:1500px;margin:0 auto}
+@media (max-width:1000px){main{grid-template-columns:1fr}}
+.stage{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));align-content:start}
+.simbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin:0}
+.simbox figcaption{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:8px}
+.simbox figcaption strong{font-size:16px}
+.chip{display:inline-block;padding:2px 9px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+canvas{display:block;width:100%;height:auto;aspect-ratio:1/1;border-radius:10px;background:#12181f}
+.status{margin:8px 2px 2px;display:flex;gap:8px;flex-wrap:wrap}
+.pill{font-weight:700;font-size:13px;padding:3px 10px;border-radius:8px;border:2px solid currentColor;display:inline-flex;gap:6px;align-items:center}
+.pill.G{color:var(--green)} .pill.Y{color:var(--amber)} .pill.R{color:var(--red)}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+@media (max-width:560px){.tiles{grid-template-columns:repeat(2,1fr)}}
+.tile{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.tile .k{font-size:12px;color:var(--muted)}
+.tile .v{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums}
+.tile .v small{font-size:12px;font-weight:500;color:var(--muted)}
+.queues{margin-top:10px;display:grid;gap:6px}
+.q{display:grid;grid-template-columns:70px 1fr 74px;gap:8px;align-items:center;font-size:13px}
+.q .bar{height:12px;background:#0f151b;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.q .bar i{display:block;height:100%;background:repeating-linear-gradient(135deg,var(--blue) 0 6px,#4a8fd0 6px 12px);width:0}
+.q b{font-variant-numeric:tabular-nums;text-align:right}
+aside .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+aside h2{font-size:14px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.chips button{background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:6px 12px;cursor:pointer;font-size:13px;font-weight:600}
+.chips button:hover{border-color:var(--amber)}
+.row{display:grid;grid-template-columns:62px 1fr 38px;gap:8px;align-items:center;margin:7px 0;font-size:14px}
+.row output{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+input[type=range]{width:100%;accent-color:var(--amber)}
+.fx{display:grid;grid-template-columns:74px 66px 1fr;gap:8px;align-items:baseline;font-size:12.5px;margin:7px 0}
+.fx b{color:var(--text)}
+.fx span{font-weight:700;color:var(--amber);font-variant-numeric:tabular-nums}
+.fx i{color:var(--muted);font-style:normal;font-size:11.5px;line-height:1.35}
+.note{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px}
+.verdict{background:#13261d;border:1px solid #2c6a49;border-radius:12px;padding:12px 14px;margin-bottom:14px;display:none}
+.verdict.show{display:block}
+.verdict.bad{background:#2a1d12;border-color:#7a5320}
+.verdict b{font-size:16px}
+.check{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px}
+.kbd{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:0 6px;font-size:12px}
+footer{max-width:1500px;margin:0 auto;padding:6px 22px 26px;color:var(--muted);font-size:13px}
+.sr{position:absolute;left:-9999px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>JunctionLab<small>चौक</small></h1>
+    <p>Four-way signalised junction · left-hand traffic · Indian vehicle mix</p>
+  </div>
+  <div class="seg" role="group" aria-label="Signal control mode">
+    <button type="button" data-mode="fixed" aria-pressed="true">Fixed (manual)</button>
+    <button type="button" data-mode="calculated" aria-pressed="false">Fixed (calculated)</button>
+    <button type="button" data-mode="adaptive" aria-pressed="false">Adaptive</button>
+    <button type="button" data-mode="compare" aria-pressed="false">Compare both</button>
+  </div>
+  <div class="ctrls">
+    <button class="btn primary" id="btnPause" type="button">Pause</button>
+    <button class="btn danger" id="btnReset" type="button">Reset</button>
+    <div class="seg" role="group" aria-label="Simulation speed" id="speedSeg">
+      <button type="button" data-speed="1" aria-pressed="true">1×</button>
+      <button type="button" data-speed="2" aria-pressed="false">2×</button>
+      <button type="button" data-speed="4" aria-pressed="false">4×</button>
+      <button type="button" data-speed="8" aria-pressed="false">8×</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div class="verdict" id="verdict" aria-live="polite"></div>
+    <div class="stage" id="stage"></div>
+  </section>
+
+  <aside>
+    <div class="panel">
+      <h2>Traffic demand · vehicles per minute</h2>
+      <div class="chips" id="presets">
+        <button type="button" data-p="balanced">Balanced</button>
+        <button type="button" data-p="office">Office rush (N–S)</button>
+        <button type="button" data-p="market">Market day (E–W)</button>
+        <button type="button" data-p="stress">Stress test</button>
+      </div>
+      <div id="rates"></div>
+      <p class="note">Cars, two-wheelers, auto-rickshaws and buses arrive at random. Changes apply instantly.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Signal timing</h2>
+      <div class="row"><label for="green">Green</label><input id="green" type="range" min="5" max="40" value="12"><output id="greenOut">12s</output></div>
+      <p class="note">Fixed (manual) mode: each direction pair gets this much green. Amber and all-red below are always added. Adaptive mode ignores this slider: it gives 6–30 s and extends green while vehicles keep arriving. Fixed (calculated) also ignores it and uses the Webster plan below.</p>
+    </div>
+
+    <div class="panel" id="planPanel">
+      <h2>Webster plan · fixed (calculated)</h2>
+      <div class="tiles" id="planTiles"></div>
+      <p class="note" id="planNote"></p>
+    </div>
+
+    <div class="panel">
+      <h2>Why these timings?</h2>
+      <div id="whyTimings"></div>
+      <p class="note">Both clearance intervals come from the physics of the scene, not from a rule of thumb. Every input is a named constant at the top of the core, so overriding one changes the derived values everywhere.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Emergency vehicle</h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select id="ambDir" aria-label="Ambulance direction">
+          <option value="R">Random arm</option><option value="N">From North</option><option value="E">From East</option><option value="S">From South</option><option value="W">From West</option>
+        </select>
+        <button class="btn" id="btnAmb" type="button">Send ambulance (108)</button>
+      </div>
+      <label class="check"><input type="checkbox" id="corridor" checked> Green corridor for emergency vehicles</label>
+      <p class="note">With the corridor on, signals clear the ambulance's arm and queued vehicles make way. Switch it off to see the delay it normally causes.</p>
+    </div>
+
+    <div class="panel">
+      <h2>How waiting is measured</h2>
+      <p class="note" style="margin-top:0">A vehicle is "waiting" while it moves slower than 8 px/s before the stop line, including time spent queued beyond the screen edge. Average wait counts vehicles that have crossed and those still waiting.</p>
+      <p class="note">Shortcuts: <span class="kbd">Space</span> pause · <span class="kbd">R</span> reset · <span class="kbd">A</span> ambulance</p>
+    </div>
+  </aside>
+</main>
+<footer>Everything runs inside your browser. No data is collected, stored or sent anywhere.</footer>
+<div class="sr" id="live" aria-live="polite"></div>
+
+<script>
+// ==CORE-START==
+const DIRS = ['N','E','S','W'];
+const AXIS = {N:0, S:0, E:1, W:1};          // 0 = north-south pair, 1 = east-west pair
+const NAMES = {N:'North', E:'East', S:'South', W:'West'};
+const W = 760, C = 380, HALF = 40, ZEBRA = 26;
+const STOP  = C - HALF - ZEBRA;             // stop line, measured along the lane from the screen edge
+const BOX_S = C - HALF, BOX_E = C + HALF;   // junction box entry / exit
+const S0 = 7, TGAP = 0.9, BCOMF = 110, BMAX = 220, DT = 1/60, WAIT_V = 8, LATV = 70;
+const MIN_PRE = 1.0, HOLD_MAX = 45, NEAR = 150;
+const MIN_GREEN = 6, MAX_GREEN = 30, GAP_OUT = 1.6;
+const VT = {
+  car:  {len:28, wid:16, v0:105, a:65},
+  bike: {len:15, wid:8,  v0:125, a:90},
+  auto: {len:22, wid:14, v0:90,  a:50},
+  bus:  {len:54, wid:18, v0:80,  a:35},
+  amb:  {len:32, wid:17, v0:150, a:100}
+};
+const MIX = [['car',.5],['bike',.3],['auto',.15],['bus',.05]];
+const PALETTE = ['#e8e6e1','#8fb4d9','#d9a441','#9bc59d','#c98b8b','#b7a6d6','#f0c9a0'];
+
+/* ---------- signal timing derived from physics ----------
+   Every number below is a named constant: change it here and the whole model follows. */
+const PX_PER_M = 6.6;                  // scene scale: 1 metre of road is this many px (80px road = 12.1m)
+const REACTION_S = 1.0;                // driver perception-reaction before braking on amber
+const DECEL_MS2 = 3.0;                 // comfortable braking deceleration
+const APPROACH_SPEED_PX = VT.car.v0;   // design vehicle approach speed, px/s
+const CLEARANCE_SPEED_PX = VT.car.v0;  // speed the last vehicle uses to clear the box, px/s
+const JUNCTION_WIDTH_PX = 2 * HALF;    // distance to cross the carriageway
+const CLEARANCE_VEH_LEN_PX = VT.car.len;
+
+const toM = px => px / PX_PER_M;                      // px -> m
+const toMps = pxps => pxps / PX_PER_M;                // px/s -> m/s
+const amberOf = (r = REACTION_S, v = APPROACH_SPEED_PX, a = DECEL_MS2) => r + toMps(v) / (2 * a);
+const allRedOf = (w = JUNCTION_WIDTH_PX, L = CLEARANCE_VEH_LEN_PX, v = CLEARANCE_SPEED_PX) => (toM(w) + toM(L)) / toMps(v);
+
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const clamp = (x,lo,hi) => Math.max(lo, Math.min(hi, x));
+
+// s = distance along the lane from the screen edge, off = lateral offset to the LEFT of travel (left-hand traffic)
+function pos(dir, s, off){
+  switch(dir){
+    case 'S': return {x:C-off, y:W-s};
+    case 'N': return {x:C+off, y:s};
+    case 'W': return {x:s,     y:C-off};
+    default:  return {x:W-s,   y:C+off};
+  }
+}
+function headingAngle(dir){ return {S:-Math.PI/2, N:Math.PI/2, W:0, E:Math.PI}[dir]; }
+function carRect(dir, c){
+  const a = pos(dir, c.s, c.off), b = pos(dir, c.s - c.len, c.off), hw = c.wid/2;
+  if(dir === 'W' || dir === 'E') return {x1:Math.min(a.x,b.x), x2:Math.max(a.x,b.x), y1:a.y-hw, y2:a.y+hw};
+  return {x1:a.x-hw, x2:a.x+hw, y1:Math.min(a.y,b.y), y2:Math.max(a.y,b.y)};
+}
+
+class Sim {
+  constructor(cfg, mode, seed){ this.cfg = cfg; this.mode = mode; this.seed = seed || 1; this.reset(); }
+
+  reset(){
+    this.t = 0; this.nid = 1;
+    this.rng = {}; this.rateUsed = {}; this.next = {};
+    DIRS.forEach((d,i) => { this.rng[d] = mulberry32(this.seed*7919 + i*104729 + 11); this.rateUsed[d] = this.cfg.rates[d]; });
+    this.cars = {N:[],E:[],S:[],W:[]};
+    this.amb = {N:[],E:[],S:[],W:[]};
+    this.ambQ = {N:[],E:[],S:[],W:[]};
+    this.pending = {N:[],E:[],S:[],W:[]};
+    DIRS.forEach(d => { this.next[d] = this.drawGap(d); });
+    this.ctl = {axis:0, state:'G', timer:0, nextAxis:1, gapT:0, owedAxis:null};
+    this.clearLog = [];                     // every amber / all-red interval, for the safety test
+    this.phases = 0;                        // number of green phases served since reset
+    this.prevLamp = ['G','R']; this.redSince = [-99, 0];
+    this.stats = {passed:0, passedBy:{N:0,E:0,S:0,W:0}, served:0, waitSum:0, collisions:0, redViol:0, dropped:0, ambPassed:0, ambWait:null};
+    this.overlap = new Set();
+    this.ambDir = null;
+    this.satOv = null;                   // per-sim saturation override, else the global SAT
+    this.plan = this.refreshPlan();      // read-only Webster plan for the UI
+  }
+
+  drawGap(d){
+    const rate = this.cfg.rates[d] / 60;
+    if(rate <= 0) return this.t + 0.5;
+    return this.t - Math.log(1 - this.rng[d]()) / rate;
+  }
+
+  lamp(axis){
+    const c = this.ctl;
+    if(c.state === 'R' || axis !== c.axis) return 'R';
+    return c.state;
+  }
+
+  step(dt = DT){
+    this.t += dt;
+    this.arrivals();
+    this.updateSignal(dt);
+    this.spawn();
+    this.moveCars(dt);
+    this.checkSafety();
+  }
+
+  arrivals(){
+    for(const d of DIRS){
+      const rate = this.cfg.rates[d];
+      if(rate !== this.rateUsed[d]){
+        const old = this.rateUsed[d];
+        if(rate <= 0) this.next[d] = this.t + 0.5;
+        else if(old > 0) this.next[d] = this.t + (this.next[d] - this.t) * old / rate;
+        else this.next[d] = this.drawGap(d);
+        this.rateUsed[d] = rate;
+        if(this.mode === 'calculated') this.refreshPlan();   // demand changed -> new Webster plan
+      }
+      while(this.t >= this.next[d]){
+        if(rate > 0){
+          const r = this.rng[d]; let x = r(), type = 'car', acc = 0;
+          for(const [k,w] of MIX){ acc += w; if(x < acc){ type = k; break; } }
+          const v0f = 0.92 + 0.16 * r();
+          const col = PALETTE[Math.floor(r() * PALETTE.length)];
+          if(this.pending[d].length < 60) this.pending[d].push({type, tArr:this.next[d], v0f, col});
+          else this.stats.dropped++;
+        }
+        this.next[d] = this.drawGap(d);
+      }
+    }
+  }
+
+  sendAmbulance(d){
+    if(this.amb[d].length || this.ambQ[d].length) return false;
+    this.ambQ[d].push({readyAt:this.t + 3.5});
+    return true;
+  }
+
+  emergencyAxis(){
+    let best = null, bd = Infinity;
+    for(const d of DIRS){
+      for(const a of this.amb[d]) if(!a.crossed && STOP - a.s < bd){ bd = STOP - a.s; best = d; }
+      if(this.ambQ[d].length && STOP + 500 < bd){ bd = STOP + 500; best = d; }
+    }
+    this.ambDir = best;
+    return (this.cfg.corridor && best) ? AXIS[best] : null;
+  }
+
+  nearCount(axis){
+    let n = 0;
+    for(const d of DIRS){
+      if(AXIS[d] !== axis) continue;
+      n += this.pending[d].length;
+      for(const c of this.cars[d]) if(!c.crossed && STOP - c.s < NEAR) n++;
+    }
+    return n;
+  }
+
+  adaptiveEnd(dt){
+    const c = this.ctl, cur = c.axis, oth = 1 - cur;
+    if(this.nearCount(cur) > 0) c.gapT = 0; else c.gapT += dt;
+    if(c.timer < MIN_GREEN) return false;
+    if(this.nearCount(oth) === 0) return false;
+    if(c.timer >= MAX_GREEN) return true;
+    return c.gapT >= GAP_OUT;
+  }
+
+  logClearance(kind, dur){
+    this.clearLog.push({kind, dur, at:this.t});
+    if(this.clearLog.length > 20000) this.clearLog.shift();
+  }
+
+  /* Every amber and all-red that has run since the last reset. A safety interval is
+     full length when dur >= the configured value, and none may be missing. */
+  clearanceShortfall(){
+    const eps = 1e-6;
+    let worst = null;
+    for(const e of this.clearLog){
+      const need = e.kind === 'Y' ? this.cfg.amber : this.cfg.allRed;
+      if(e.dur < need - eps && (!worst || e.dur - need < worst.dur - worst.need)) worst = {kind:e.kind, dur:e.dur, need, at:e.at};
+    }
+    const nY = this.clearLog.filter(e => e.kind === 'Y').length;
+    const nR = this.clearLog.filter(e => e.kind === 'R').length;
+    // one amber and one all-red per phase change; the opening green needs no clearance
+    const complete = Math.abs(nY - nR) <= 1 && nY >= this.phases - 1;
+    return {worst, nY, nR, phases:this.phases, complete};
+  }
+
+  /* ---- Webster ("Fixed (calculated)") ---- */
+  refreshPlan(){
+    const sat = this.satOv || SAT;
+    this.plan = websterPlan({
+      demands: criticalDemand(this.cfg.rates), saturation: sat,
+      amber: this.cfg.amber, allRed: this.cfg.allRed, minGreen: MIN_GREEN
+    });
+    return this.plan;
+  }
+  setSaturation(v){ this.satOv = Array.isArray(v) ? v.slice() : [v, v]; return this.refreshPlan(); }
+  greenFor(axis){
+    const p = this.plan, g = (p && p.greens) ? +p.greens[axis] : NaN;
+    return (isFinite(g) && g > 0) ? g : this.cfg.green;
+  }
+
+  updateSignal(dt){
+    const c = this.ctl; c.timer += dt;
+    const em = this.emergencyAxis();
+    if(c.state === 'G'){
+      /* RECOVERY: an axis that preemption cut short is owed at least MIN_GREEN on its next
+         turn. While the debt is unpaid, preemption may not truncate that axis again. */
+      const owed = c.owedAxis === c.axis;
+      let end = false;
+      if(em !== null && em !== c.axis) end = owed ? c.timer >= MIN_GREEN : c.timer >= MIN_PRE;
+      else if(em !== null) end = c.timer > HOLD_MAX;
+      else if(this.mode === 'fixed') end = c.timer >= this.cfg.green;
+      else if(this.mode === 'calculated') end = c.timer >= this.greenFor(c.axis);
+      else end = this.adaptiveEnd(dt);
+      if(owed && c.timer >= MIN_GREEN) c.owedAxis = null;
+      if(end){
+        if(em !== null && em !== c.axis && c.timer < MIN_GREEN) c.owedAxis = c.axis;
+        c.state = 'Y'; c.timer = 0;
+      }
+    } else if(c.state === 'Y'){
+      /* amber is a clearance interval: never shortened and never skipped, preemption included */
+      if(c.timer >= this.cfg.amber){
+        this.logClearance('Y', c.timer);
+        const scheduled = 1 - c.axis;
+        c.nextAxis = em !== null ? em : scheduled;
+        if(em !== null && em !== scheduled && scheduled !== c.axis) c.owedAxis = scheduled;
+        c.state = 'R'; c.timer = 0;
+      }
+    } else {
+      /* all-red is a clearance interval: full length even while an emergency request is live */
+      if(em !== null){
+        if(em !== c.nextAxis){
+          const skipped = c.nextAxis;
+          if(skipped !== c.axis) c.owedAxis = skipped;
+        }
+        c.nextAxis = em;
+      }
+      if(c.timer >= this.cfg.allRed){
+        this.logClearance('R', c.timer);
+        c.axis = c.nextAxis; c.state = 'G'; c.timer = 0; c.gapT = 0;
+        this.phases++;
+      }
+    }
+    for(const ax of [0,1]){
+      const l = this.lamp(ax);
+      if(l === 'R' && this.prevLamp[ax] !== 'R') this.redSince[ax] = this.t;
+      this.prevLamp[ax] = l;
+    }
+  }
+
+  spawn(){
+    for(const d of DIRS){
+      const lane = this.cars[d], ambs = this.amb[d];
+      // ambulances appear a few seconds after the siren is detected, behind the queue
+      const q = this.ambQ[d];
+      if(q.length && this.t >= q[0].readyAt){
+        const vt = VT.amb;
+        let rear = Infinity;
+        for(const c of lane) rear = Math.min(rear, c.s - c.len);
+        if(rear >= vt.len + 12){
+          q.shift();
+          ambs.push({id:this.nid++, dir:d, type:'amb', len:vt.len, wid:vt.wid, v0:vt.v0, a:vt.a, s:vt.len, v:vt.v0*0.6, off:20,
+                     wait:0, decision:null, crossed:false, counted:false, amb:true, brake:false, yield:false, acc:0});
+        }
+      }
+      const pend = this.pending[d];
+      while(pend.length){
+        const it = pend[0], vt = VT[it.type];
+        let rear = Infinity;
+        for(const c of lane) rear = Math.min(rear, c.s - c.len);
+        for(const a of ambs) rear = Math.min(rear, a.s - a.len);
+        if(rear < vt.len + 12) break;
+        pend.shift();
+        const v0 = vt.v0 * it.v0f;
+        const last = lane.length ? lane[lane.length-1] : null;
+        lane.push({id:this.nid++, dir:d, type:it.type, len:vt.len, wid:vt.wid, v0, a:vt.a, s:vt.len,
+                   v:Math.min(v0, last ? Math.max(0, last.v + 15) : v0), off:20, wait:Math.max(0, this.t - it.tArr),
+                   decision:null, crossed:false, counted:false, amb:false, col:it.col, brake:false, yield:false, acc:0});
+      }
+    }
+  }
+
+  accelOf(c, leader, lamp){
+    let gap = Infinity, vl = c.v;
+    if(leader){ gap = leader.s - leader.len - c.s; vl = leader.v; }
+    if(!c.crossed){
+      if(lamp === 'G') c.decision = null;
+      else if(c.decision === null){
+        const dist = STOP - c.s;
+        if(lamp === 'R') c.decision = 'stop';
+        else c.decision = dist >= c.v*c.v/(2*BCOMF) ? 'stop' : 'go';
+      }
+      if(c.decision === 'stop'){
+        const sg = STOP - c.s + S0 - 3;
+        if(sg < gap){ gap = sg; vl = 0; }
+      }
+    }
+    if(gap === Infinity) return c.a * (1 - Math.pow(c.v / c.v0, 4));
+    const dv = c.v - vl;
+    const sStar = S0 + Math.max(0, c.v*TGAP + c.v*dv/(2*Math.sqrt(c.a*BCOMF)));
+    const acc = c.a * (1 - Math.pow(c.v / c.v0, 4) - Math.pow(sStar / Math.max(gap, 0.5), 2));
+    return Math.max(acc, -BMAX);
+  }
+
+  integrate(c, dt){
+    const acc = c.acc; let nv = c.v + acc*dt, ds;
+    if(nv < 0){ ds = acc < 0 ? c.v*c.v/(2*-acc) : 0; nv = 0; }
+    else ds = c.v*dt + 0.5*acc*dt*dt;
+    c.s += Math.max(0, ds); c.v = nv;
+    c.brake = acc < -14 || (nv < 2 && !c.crossed);
+    if(!c.crossed && c.v < WAIT_V) c.wait += dt;
+  }
+
+  moveCars(dt){
+    for(const d of DIRS){
+      const ax = AXIS[d], lamp = this.lamp(ax), lane = this.cars[d], ambs = this.amb[d];
+      const n = lane.length;
+      for(let i = 0; i < n; i++){
+        const c = lane[i];
+        c.yield = ambs.some(a => c.s >= a.s - a.len - 4);     // make way for the ambulance
+        c.off += clamp((c.yield ? 33 : 20) - c.off, -LATV*dt, LATV*dt);
+        c.acc = this.accelOf(c, i > 0 ? lane[i-1] : null, lamp);
+      }
+      for(const a of ambs){
+        a.off += clamp(12 - a.off, -LATV*dt, LATV*dt);
+        a.acc = this.accelOf(a, null, lamp);
+      }
+      for(let i = 0; i < n; i++) this.integrate(lane[i], dt);
+      for(const a of ambs) this.integrate(a, dt);
+      for(const c of lane.concat(ambs)){
+        if(!c.crossed && c.decision === 'stop' && c.s > STOP - 1){ c.s = STOP - 1; c.v = 0; }
+      }
+      for(let i = 1; i < n; i++){
+        const c = lane[i], l = lane[i-1], maxS = l.s - l.len - 1.5;
+        if(c.s > maxS){ c.s = maxS; c.v = Math.min(c.v, l.v); }
+      }
+      for(const c of lane.concat(ambs)){
+        if(!c.crossed && c.s > STOP){
+          c.crossed = true;
+          if(this.lamp(ax) === 'R' && this.t - this.redSince[ax] > 0.5) this.stats.redViol++;
+          if(c.amb) this.stats.ambWait = c.wait;
+          else { this.stats.served++; this.stats.waitSum += c.wait; }
+        }
+        if(!c.counted && c.s - c.len > BOX_E){
+          c.counted = true;
+          if(c.amb) this.stats.ambPassed++;
+          else { this.stats.passed++; this.stats.passedBy[d]++; }
+        }
+      }
+      this.cars[d] = lane.filter(c => c.s - c.len < W + 5);
+      this.amb[d] = ambs.filter(c => c.s - c.len < W + 5);
+    }
+  }
+
+  checkSafety(){
+    const items = [];
+    for(const d of DIRS){
+      for(const c of this.cars[d]) items.push({c, r:carRect(d, c)});
+      for(const c of this.amb[d]) items.push({c, r:carRect(d, c)});
+    }
+    const now = new Set();
+    for(let i = 0; i < items.length; i++){
+      const A = items[i].r;
+      for(let j = i+1; j < items.length; j++){
+        const B = items[j].r;
+        if(A.x1+0.5 < B.x2 && B.x1+0.5 < A.x2 && A.y1+0.5 < B.y2 && B.y1+0.5 < A.y2){
+          const key = items[i].c.id * 100000 + items[j].c.id;
+          now.add(key);
+          if(!this.overlap.has(key)) this.stats.collisions++;
+        }
+      }
+    }
+    this.overlap = now;
+  }
+
+  // ---- read-only helpers for the UI ----
+  queue(d){ let n = 0; for(const c of this.cars[d]) if(!c.crossed && c.v < WAIT_V) n++; return n; }
+  offscreen(d){ return this.pending[d].length; }
+  avgWait(){
+    let sum = this.stats.waitSum, n = this.stats.served;
+    for(const d of DIRS){
+      for(const c of this.cars[d]) if(!c.crossed){ sum += c.wait; n++; }
+      for(const p of this.pending[d]){ sum += this.t - p.tArr; n++; }
+    }
+    return n ? sum / n : 0;
+  }
+  longestWait(){
+    let m = 0;
+    for(const d of DIRS){
+      for(const c of this.cars[d]) if(!c.crossed) m = Math.max(m, c.wait);
+      for(const p of this.pending[d]) m = Math.max(m, this.t - p.tArr);
+    }
+    return m;
+  }
+}
+/* demand presets and the default configuration live in the core so headless runs use the same table */
+const PRESETS = {
+  balanced:{N:8,E:8,S:8,W:8},
+  office:{N:16,S:16,E:5,W:5},
+  market:{N:5,S:5,E:16,W:16},
+  stress:{N:22,E:22,S:22,W:22}
+};
+const DEFAULT_CFG = {rates:{N:8,E:8,S:8,W:8}, green:12, amber:amberOf(), allRed:allRedOf(), corridor:true};
+
+/* ================= Webster control: measured saturation flow + plan ================= */
+/* Every approach in this model is a single lane, so a saturation flow is always veh/h/lane. */
+const SAT_FALLBACK = 1800;          // veh/h/lane used until the calibrator has run
+const SAT_BAND = [1400, 2000];      // plausibility band: reported, never used to clamp
+const SAT_LEVELS = [30, 45, 60];    // veh/min demand ladder used to force a saturated tail
+const MAX_CYCLE = 120;              // never plan a cycle longer than this
+let SAT = [SAT_FALLBACK, SAT_FALLBACK];
+let SAT_INFO = null;                // last calibrateSaturation() result, for the UI
+
+function saturationFlow(){ return SAT.slice(); }
+function saturationInfo(){ return SAT_INFO; }
+function setSaturationFlow(v){
+  if(typeof v === 'number' && isFinite(v) && v > 0) SAT = [v, v];
+  else if(Array.isArray(v)) SAT = [+v[0] > 0 ? +v[0] : SAT_FALLBACK, +v[1] > 0 ? +v[1] : SAT_FALLBACK];
+  return SAT.slice();
+}
+/* critical approach flow per axis, in veh/h: the busiest single lane of the pair */
+function criticalDemand(rates){
+  return [Math.max(rates.N, rates.S) * 60, Math.max(rates.E, rates.W) * 60];
+}
+
+/* Counts stop-line crossings per approach as they happen (a lane crosses in id order). */
+function dischargeMeter(sim){
+  const maxId = {N:0, E:0, S:0, W:0}, cnt = {N:0, E:0, S:0, W:0}, types = {};
+  return {
+    poll(){
+      for(const d of DIRS){
+        const lane = sim.cars[d];
+        for(const c of lane) if(c.crossed && c.id > maxId[d]){ maxId[d] = c.id; cnt[d]++; types[c.type] = (types[c.type] || 0) + 1; }
+      }
+    },
+    mark(){ return {t: sim.t, cnt: Object.assign({}, cnt), types: Object.assign({}, types)}; },
+    since(m){
+      const out = {seconds: sim.t - m.t, cnt: {}, types: {}, total: 0};
+      for(const d of DIRS){ out.cnt[d] = cnt[d] - m.cnt[d]; out.total += out.cnt[d]; }
+      for(const k in types) out.types[k] = types[k] - (m.types[k] || 0);
+      return out;
+    }
+  };
+}
+
+/* One headless discharge run: heavy demand on one axis, that axis held green throughout. */
+function measureSaturation(axis, seed, level, warmup, window){
+  const pair = axis === 0 ? ['N','S'] : ['E','W'];
+  const rates = {N:0, E:0, S:0, W:0};
+  pair.forEach(d => rates[d] = level);
+  const sim = new Sim({rates, green:1e9, amber:3, allRed:1.5, corridor:false}, 'fixed', seed);
+  if(axis === 1){
+    sim.ctl = {axis:1, state:'G', timer:0, nextAxis:0, gapT:0, owedAxis:null};
+    sim.prevLamp = ['R','G']; sim.redSince = [0, -99];
+  }
+  const m = dischargeMeter(sim);
+  const total = Math.round(warmup / DT), win = Math.round(window / DT);
+  for(let i = 0; i < total; i++){ sim.step(DT); m.poll(); }
+  const fed0 = pair.every(d => sim.pending[d].length > 0);   // queue still feeding the lane
+  const mark = m.mark();
+  for(let i = 0; i < win; i++){ sim.step(DT); m.poll(); }
+  const d = m.since(mark);
+  const fed1 = pair.every(x => sim.pending[x].length > 0);
+  const perApproach = {};
+  pair.forEach(x => perApproach[x] = +(d.cnt[x] / d.seconds * 3600).toFixed(0));
+  const flow = +(pair.reduce((s, x) => s + d.cnt[x], 0) / pair.length / d.seconds * 3600).toFixed(0);
+  const seen = Object.values(d.types).reduce((a, b) => a + b, 0);
+  const perTypeFlow = {};
+  for(const k in d.types) perTypeFlow[k] = +(flow * d.types[k] / Math.max(1, seen)).toFixed(0);
+  return {axis, level, flow, perApproach, perTypeFlow, typeCounts: d.types, crossings: d.total,
+          greenSeconds: +d.seconds.toFixed(1), saturated: fed0 && fed1,
+          headway: +(d.seconds * pair.length / Math.max(1, d.total)).toFixed(2), dropped: sim.stats.dropped};
+}
+
+/* Saturated discharge capacity, measured not assumed. Returns
+   {flow, axes:[axis0,axis1], perAxis:[..], level, saturated, plausible, seconds, ...}. */
+function calibrateSaturation(seed, opts){
+  const o = opts || {};
+  const levels = o.levels || SAT_LEVELS, warmup = o.warmup || 55, window = o.window || 30;
+  const t0 = Date.now();
+  const perAxis = [null, null];
+  for(const axis of [0, 1]){
+    let r = null;
+    for(const lvl of levels){
+      r = measureSaturation(axis, (seed || 1) * 31 + axis * 104729 + Math.round(lvl * 13), lvl, warmup, window);
+      if(r.saturated) break;                      // heavier demand only when the tail was not saturated
+    }
+    perAxis[axis] = r;
+  }
+  const axes = [perAxis[0].flow, perAxis[1].flow];
+  const flow = +((axes[0] + axes[1]) / 2).toFixed(0);
+  const info = {flow, axes, perAxis, level: [perAxis[0].level, perAxis[1].level],
+                saturated: perAxis[0].saturated && perAxis[1].saturated,
+                warmup, window, band: SAT_BAND.slice(),
+                plausible: flow >= SAT_BAND[0] && flow <= SAT_BAND[1],
+                seconds: +((Date.now() - t0) / 1000).toFixed(3)};
+  if(o.apply !== false) setSaturationFlow(axes);
+  SAT_INFO = info;
+  return info;
+}
+
+/* Webster's method for two phases. demands/saturation are veh/h per critical lane. */
+function websterPlan(o){
+  const dm = o.demands || [0, 0];
+  const demands = [Math.max(0, +dm[0] || 0), Math.max(0, +dm[1] || 0)];
+  const sat = Array.isArray(o.saturation) ? o.saturation : [o.saturation, o.saturation];
+  const s = [+sat[0] > 0 ? +sat[0] : SAT_FALLBACK, +sat[1] > 0 ? +sat[1] : SAT_FALLBACK];
+  const amber = Math.max(0, +o.amber || 0), allRed = Math.max(0, +o.allRed || 0);
+  const minGreen = o.minGreen == null ? MIN_GREEN : Math.max(0, +o.minGreen);
+  const maxCycle = o.maxCycle == null ? MAX_CYCLE : Math.max(5, +o.maxCycle);
+  const L = (amber + allRed) * 2;                      // total lost time = both (amber + all-red)
+  const ratios = [demands[0] / s[0], demands[1] / s[1]];
+  const Y = ratios[0] + ratios[1];
+  const degraded = Y >= 0.95;
+  const Yc = degraded ? 0.9 : Y;                      // fallback is designed at 90% of capacity
+  let warning = degraded ? 'demand exceeds capacity' : null;
+  let Co = Math.ceil(((1.5 * L + 5) / (1 - Yc)) / 5) * 5;
+  let cycleCapped = false;
+  if(Co > maxCycle){ Co = maxCycle; cycleCapped = true; }
+  let avail = Co - L;
+  let extended = false;
+  if(avail < 2 * minGreen){ Co = Math.ceil((L + 2 * minGreen) / 5) * 5; avail = Co - L; extended = true; }
+  let greens = (degraded || Y <= 1e-9) ? [avail / 2, avail / 2]
+                                       : [avail * ratios[0] / Y, avail * ratios[1] / Y];
+  const need = greens.reduce((a, x) => a + (x < minGreen ? minGreen - x : 0), 0);
+  if(need > 1e-6){                                     // minimum green bites: take it back off the donors
+    const donor = greens.map(x => Math.max(0, x - minGreen)), cap = donor[0] + donor[1];
+    greens = greens.map(x => Math.max(x, minGreen));
+    if(cap >= need - 1e-6){
+      for(let i = 0; i < 2; i++) if(donor[i] > 0) greens[i] -= need * donor[i] / cap;
+      if(!degraded) warning = 'minimum green applied; split rebalanced from the busier phase';
+    } else {
+      const short = need - cap;
+      greens = [minGreen + short / 2, minGreen + short / 2];
+      Co = Math.ceil((greens[0] + greens[1] + L) / 5) * 5;
+      if(!degraded) warning = 'minimum green exceeded the cycle; cycle extended to ' + Co + ' s';
+    }
+    extended = true;
+  }
+  const raw = greens.slice();                                                     // un-rounded proportional split
+  greens = raw.map(x => Math.max(minGreen, Math.round(x * 2) / 2));   // 0.5 s resolution for the controller
+  if(cycleCapped && !degraded && !warning) warning = 'cycle capped at ' + maxCycle + ' s';
+  return {cycleLength: Co, greens, lostTime: L, Y, degraded, warning,
+          ratios, demands, saturation: s, minGreen, amber, allRed,
+          rawGreens: [raw[0], raw[1]], greenTotal: greens[0] + greens[1],
+          actualCycle: greens[0] + greens[1] + L, cycleCapped, extended, maxCycle};
+}
+// ==CORE-END==
+
+/* ================= UI and drawing ================= */
+const cfg = {rates:Object.assign({}, DEFAULT_CFG.rates), green:DEFAULT_CFG.green,
+             amber:DEFAULT_CFG.amber, allRed:DEFAULT_CFG.allRed, corridor:DEFAULT_CFG.corridor};
+const SEED = 20261016;
+const DPR = Math.min(2, window.devicePixelRatio || 1);
+const K = DPR;
+let mode = 'fixed', speed = 1, paused = false, views = [];
+
+function rr(ctx, x, y, w, h, r){
+  r = Math.min(r, w/2, h/2);
+  ctx.beginPath(); ctx.moveTo(x+r, y);
+  ctx.arcTo(x+w, y, x+w, y+h, r); ctx.arcTo(x+w, y+h, x, y+h, r);
+  ctx.arcTo(x, y+h, x, y, r); ctx.arcTo(x, y, x+w, y, r); ctx.closePath();
+}
+function laneRect(ctx, dir, s1, s2, o1, o2){
+  const a = pos(dir, s1, o1), b = pos(dir, s2, o2);
+  ctx.fillRect(Math.min(a.x,b.x), Math.min(a.y,b.y), Math.abs(a.x-b.x), Math.abs(a.y-b.y));
+}
+
+/* static background, drawn once */
+const bg = document.createElement('canvas');
+bg.width = bg.height = W*K;
+(function paintBackground(){
+  const g = bg.getContext('2d'); g.setTransform(K,0,0,K,0,0);
+  g.fillStyle = '#121a21'; g.fillRect(0,0,W,W);
+  // corner blocks with sidewalks, buildings and trees
+  const blocks = [[0,0],[C+HALF,0],[0,C+HALF],[C+HALF,C+HALF]];
+  const bcols = ['#2b3641','#33404c','#3a3a46','#2f3d3a','#413a36','#2a3340'];
+  blocks.forEach(([bx,by],i) => {
+    const w = C-HALF, h = C-HALF;
+    g.fillStyle = '#1b242d'; g.fillRect(bx,by,w,h);
+    g.fillStyle = '#26313b'; g.fillRect(bx+(bx? 0:6), by+(by?0:6), w-6, h-6);
+    const rnd = mulberry32(100+i);
+    for(let k = 0; k < 5; k++){
+      const bw = 40+rnd()*60, bh = 36+rnd()*52;
+      const x = bx + 24 + rnd()*(w-bw-48), y = by + 24 + rnd()*(h-bh-48);
+      g.fillStyle = bcols[Math.floor(rnd()*bcols.length)]; rr(g,x,y,bw,bh,4); g.fill();
+      g.fillStyle = 'rgba(255,255,255,.07)'; g.fillRect(x+4,y+4,bw-8,5);
+    }
+    for(let k = 0; k < 7; k++){
+      g.fillStyle = 'rgba(70,160,100,.55)'; g.beginPath();
+      g.arc(bx+16+rnd()*(w-32), by+16+rnd()*(h-32), 6+rnd()*6, 0, 7); g.fill();
+    }
+  });
+  // roads
+  g.fillStyle = '#2a2f36';
+  g.fillRect(C-HALF,0,2*HALF,W); g.fillRect(0,C-HALF,W,2*HALF);
+  // kerbs
+  g.fillStyle = '#56626e';
+  g.fillRect(C-HALF-3,0,3,C-HALF); g.fillRect(C+HALF,0,3,C-HALF);
+  g.fillRect(C-HALF-3,C+HALF,3,C-HALF); g.fillRect(C+HALF,C+HALF,3,C-HALF);
+  g.fillRect(0,C-HALF-3,C-HALF,3); g.fillRect(0,C+HALF,C-HALF,3);
+  g.fillRect(C+HALF,C-HALF-3,C-HALF,3); g.fillRect(C+HALF,C+HALF,C-HALF,3);
+  // junction box
+  g.fillStyle = '#30363f'; g.fillRect(BOX_S,BOX_S,2*HALF,2*HALF);
+  // centre lines
+  g.strokeStyle = '#f2c230'; g.lineWidth = 3; g.setLineDash([16,10]);
+  const arms = [[C,0,C,BOX_S-ZEBRA-4],[C,BOX_E+ZEBRA+4,C,W],[0,C,BOX_S-ZEBRA-4,C],[BOX_E+ZEBRA+4,C,W,C]];
+  arms.forEach(([x1,y1,x2,y2]) => { g.beginPath(); g.moveTo(x1,y1); g.lineTo(x2,y2); g.stroke(); });
+  g.setLineDash([]);
+  // zebra crossings and stop lines
+  DIRS.forEach(d => {
+    g.fillStyle = 'rgba(240,240,240,.85)';
+    for(let lat = -HALF; lat < HALF; lat += 12) laneRect(g, d, STOP+7, STOP+23, lat, lat+6);
+    g.fillStyle = '#ffffff';
+    laneRect(g, d, STOP-1, STOP+3, 0, HALF);
+  });
+  // compass labels
+  g.font = '700 15px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
+  [['N',C-62,18],['S',C+62,W-18],['W',18,C+62],['E',W-18,C-62]].forEach(([t,x,y]) => {
+    g.fillStyle = 'rgba(0,0,0,.45)'; rr(g,x-13,y-13,26,26,8); g.fill();
+    g.fillStyle = '#dfe7ee'; g.fillText(t,x,y+1);
+  });
+})();
+
+function drawVehicle(ctx, d, c, tNow){
+  const p = pos(d, c.s - c.len/2, c.off);
+  ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(headingAngle(d));
+  const L = c.len, Wd = c.wid;
+  if(c.type === 'bike'){
+    ctx.fillStyle = '#20262c'; rr(ctx,-L/2,-Wd/2,L,Wd,3); ctx.fill();
+    ctx.fillStyle = c.col; ctx.beginPath(); ctx.arc(-1,0,3.4,0,7); ctx.fill();
+    ctx.fillStyle = '#f4d98a'; ctx.fillRect(L/2-2,-1.5,2,3);
+  } else if(c.type === 'bus'){
+    ctx.fillStyle = '#b3261e'; rr(ctx,-L/2,-Wd/2,L,Wd,4); ctx.fill();
+    ctx.fillStyle = '#f1e3d3'; ctx.fillRect(-L/2+4,-Wd/2+2,L-16,3); ctx.fillRect(-L/2+4,Wd/2-5,L-16,3);
+    ctx.fillStyle = '#1b2430'; ctx.fillRect(L/2-9,-Wd/2+2,6,Wd-4);
+  } else if(c.type === 'auto'){
+    ctx.fillStyle = '#f2c230'; rr(ctx,-L/2,-Wd/2,L,Wd,5); ctx.fill();
+    ctx.fillStyle = '#1b1b1b'; ctx.fillRect(-L/2+2,-Wd/2,L*0.45,Wd);
+    ctx.fillStyle = '#243040'; ctx.fillRect(L/2-6,-Wd/2+2,4,Wd-4);
+  } else if(c.type === 'amb'){
+    ctx.fillStyle = '#ffffff'; rr(ctx,-L/2,-Wd/2,L,Wd,4); ctx.fill();
+    ctx.fillStyle = '#d62b2b'; ctx.fillRect(-L/2+3,-1.6,L-12,3.2);
+    ctx.fillRect(-4,-5,3.2,10); ctx.fillRect(-7.4,-1.6,10,3.2);
+    ctx.fillStyle = '#243040'; ctx.fillRect(L/2-8,-Wd/2+2,5,Wd-4);
+    const on = Math.floor(tNow*6) % 2 === 0;
+    ctx.fillStyle = on ? '#ff3b3b' : '#3b8bff'; ctx.fillRect(L/2-12,-Wd/2,4,Wd/2);
+    ctx.fillStyle = on ? '#3b8bff' : '#ff3b3b'; ctx.fillRect(L/2-12,0,4,Wd/2);
+  } else {
+    ctx.fillStyle = c.col; rr(ctx,-L/2,-Wd/2,L,Wd,5); ctx.fill();
+    ctx.fillStyle = 'rgba(15,25,38,.8)'; ctx.fillRect(L/2-10,-Wd/2+2,6,Wd-4); ctx.fillRect(-L/2+4,-Wd/2+2,5,Wd-4);
+  }
+  if(c.brake){ ctx.fillStyle = '#ff3030'; ctx.fillRect(-L/2-1,-Wd/2+1,2.4,3); ctx.fillRect(-L/2-1,Wd/2-4,2.4,3); }
+  ctx.restore();
+}
+
+function drawSignal(ctx, d, lamp){
+  const p = pos(d, STOP-6, HALF+16);
+  ctx.save(); ctx.translate(p.x, p.y);
+  ctx.fillStyle = '#0b0f13'; rr(ctx,-11,-30,22,60,6); ctx.fill();
+  ctx.strokeStyle = '#4a5764'; ctx.lineWidth = 1.5; ctx.stroke();
+  const lamps = [['R',-19,'#ff4d4d'],['Y',0,'#ffbf3c'],['G',19,'#3ddc84']];
+  for(const [k,y,col] of lamps){
+    const lit = lamp === k;
+    ctx.beginPath(); ctx.arc(0,y,7.2,0,7);
+    ctx.fillStyle = lit ? col : '#1c242c'; ctx.fill();
+    ctx.strokeStyle = lit ? '#ffffff' : '#3a4651'; ctx.lineWidth = lit ? 2 : 1; ctx.stroke();
+    if(lit){
+      ctx.fillStyle = '#10151a';
+      if(k === 'R') ctx.fillRect(-3.2,y-3.2,6.4,6.4);
+      else if(k === 'Y'){ ctx.beginPath(); ctx.moveTo(0,y-4); ctx.lineTo(4,y+3); ctx.lineTo(-4,y+3); ctx.closePath(); ctx.fill(); }
+      else { ctx.beginPath(); ctx.arc(0,y,3,0,7); ctx.fill(); }
+    }
+  }
+  ctx.restore();
+  const label = lamp === 'G' ? 'GO' : lamp === 'Y' ? 'WAIT' : 'STOP';
+  const lc = lamp === 'G' ? '#3ddc84' : lamp === 'Y' ? '#ffbf3c' : '#ff6b6b';
+  const q = pos(d, STOP-52, HALF+16);
+  ctx.font = '800 15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  const tw = ctx.measureText(label).width + 16;
+  ctx.fillStyle = 'rgba(8,11,14,.85)'; rr(ctx,q.x-tw/2,q.y-11,tw,22,7); ctx.fill();
+  ctx.strokeStyle = lc; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = lc; ctx.fillText(label, q.x, q.y+1);
+}
+
+function draw(v){
+  const ctx = v.ctx, sim = v.sim;
+  ctx.setTransform(K,0,0,K,0,0);
+  ctx.drawImage(bg, 0, 0, W, W);
+  // green corridor highlight
+  if(sim.ambDir && cfg.corridor){
+    const pulse = 0.18 + 0.10*Math.sin(sim.t*6);
+    ctx.fillStyle = 'rgba(61,220,132,' + pulse + ')';
+    laneRect(ctx, sim.ambDir, 0, W, 0, HALF);
+  }
+  for(const d of DIRS){
+    const lane = sim.cars[d];
+    for(let i = lane.length-1; i >= 0; i--) drawVehicle(ctx, d, lane[i], sim.t);
+  }
+  for(const d of DIRS) for(const a of sim.amb[d]) drawVehicle(ctx, d, a, sim.t);
+  DIRS.forEach(d => drawSignal(ctx, d, sim.lamp(AXIS[d])));
+  if(sim.ambDir){
+    const txt = cfg.corridor ? 'AMBULANCE 108 · GREEN CORRIDOR · ' + NAMES[sim.ambDir].toUpperCase()
+                             : 'AMBULANCE 108 · NO CORRIDOR · ' + NAMES[sim.ambDir].toUpperCase();
+    ctx.font = '800 15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(txt).width + 24;
+    ctx.fillStyle = 'rgba(8,11,14,.9)'; rr(ctx,C-tw/2,34,tw,28,9); ctx.fill();
+    ctx.strokeStyle = cfg.corridor ? '#3ddc84' : '#ffbf3c'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#ffffff'; ctx.fillText(txt, C, 49);
+  }
+}
+
+/* ---------- DOM ---------- */
+const $ = id => document.getElementById(id);
+const stage = $('stage');
+const fmt = x => x.toFixed(1);
+const mmss = t => Math.floor(t/60) + ':' + String(Math.floor(t%60)).padStart(2,'0');
+
+function makeView(sim, title){
+  const fig = document.createElement('figure'); fig.className = 'simbox';
+  fig.innerHTML = `
+    <figcaption><strong>${title}</strong><span class="chip">time <span data-k="clock">0:00</span></span></figcaption>
+    <canvas role="img" aria-label="${title}: top-down view of a four-way junction with live traffic"></canvas>
+    <div class="status"><span class="pill" data-k="ns"></span><span class="pill" data-k="ew"></span></div>
+    <div class="tiles">
+      <div class="tile"><div class="k">Cars passed</div><div class="v" data-k="passed">0</div></div>
+      <div class="tile"><div class="k">Average wait</div><div class="v"><span data-k="avg">0.0</span><small> s</small></div></div>
+      <div class="tile"><div class="k">Longest wait now</div><div class="v"><span data-k="longest">0.0</span><small> s</small></div></div>
+      <div class="tile"><div class="k">Collisions · red-light runs</div><div class="v"><span data-k="coll">0</span><small> · </small><span data-k="red">0</span></div></div>
+    </div>
+    <div class="queues" data-k="queues"></div>
+    <p class="note" data-k="ambnote" style="min-height:1.3em"></p>`;
+  const canvas = fig.querySelector('canvas');
+  canvas.width = canvas.height = W*K;
+  const el = {}; fig.querySelectorAll('[data-k]').forEach(n => el[n.dataset.k] = n);
+  el.queues.innerHTML = DIRS.map(d => `<div class="q"><span>${NAMES[d]}</span><div class="bar"><i data-q="${d}"></i></div><b data-n="${d}">0</b></div>`).join('');
+  stage.appendChild(fig);
+  return {sim, canvas, ctx:canvas.getContext('2d'), el, fig};
+}
+
+function build(){
+  stage.innerHTML = '';
+  const defs = mode === 'compare' ? [['fixed','Fixed timing'],['adaptive','Adaptive timing']]
+             : mode === 'adaptive' ? [['adaptive','Adaptive timing']] : [['fixed','Fixed timing']];
+  views = defs.map(([m,t]) => makeView(new Sim(cfg, m, SEED), t));
+  renderAll();
+}
+
+function lampText(l){ return l === 'G' ? 'GO' : l === 'Y' ? 'WAIT' : 'STOP'; }
+function renderStats(v){
+  const s = v.sim, st = s.stats, e = v.el;
+  e.clock.textContent = mmss(s.t);
+  const ns = s.lamp(0), ew = s.lamp(1);
+  e.ns.className = 'pill ' + ns; e.ns.textContent = 'North–South: ' + lampText(ns);
+  e.ew.className = 'pill ' + ew; e.ew.textContent = 'East–West: ' + lampText(ew);
+  e.passed.textContent = st.passed;
+  e.avg.textContent = fmt(s.avgWait());
+  e.longest.textContent = fmt(s.longestWait());
+  e.coll.textContent = st.collisions; e.red.textContent = st.redViol;
+  for(const d of DIRS){
+    const q = s.queue(d), off = s.offscreen(d);
+    v.fig.querySelector(`[data-n="${d}"]`).textContent = q + (off ? ' +' + off : '');
+    v.fig.querySelector(`[data-q="${d}"]`).style.width = Math.min(100, (q + off) * 9) + '%';
+  }
+  if(st.ambWait !== null) e.ambnote.textContent = 'Last ambulance waited ' + fmt(st.ambWait) + ' s at the signal.';
+  else e.ambnote.textContent = s.ambDir ? 'Ambulance approaching from the ' + NAMES[s.ambDir] + '…' : '';
+}
+function renderVerdict(){
+  const el = $('verdict');
+  if(mode !== 'compare' || views.length < 2){ el.className = 'verdict'; return; }
+  const [f, a] = views.map(v => v.sim);
+  if(f.t < 60 || f.stats.served < 10 || a.stats.served < 10){
+    el.className = 'verdict show';
+    el.innerHTML = 'Both junctions get the <b>same vehicles at the same moments</b>. Let it run for a minute to see which timing wins.';
+    return;
+  }
+  const fw = f.avgWait(), aw = a.avgWait(), d = (fw - aw) / Math.max(fw, 0.1) * 100;
+  const dp = a.stats.passed - f.stats.passed;
+  const better = d >= 0;
+  el.className = 'verdict show' + (better ? '' : ' bad');
+  el.innerHTML = better
+    ? `<b>Adaptive cuts average wait by ${Math.abs(d).toFixed(0)}%</b> (${fmt(fw)} s → ${fmt(aw)} s) and has cleared ${dp >= 0 ? dp + ' more' : Math.abs(dp) + ' fewer'} vehicles after ${mmss(f.t)}.`
+    : `<b>Fixed timing is ${Math.abs(d).toFixed(0)}% better here</b> (${fmt(fw)} s vs ${fmt(aw)} s). This demand is balanced enough that a fair fixed cycle already works.`;
+}
+function renderAll(){ views.forEach(renderStats); renderVerdict(); }
+
+/* ---------- controls ---------- */
+function buildRates(){
+  $('rates').innerHTML = DIRS.map(d => `
+    <div class="row"><label for="r${d}">${NAMES[d]}</label>
+    <input id="r${d}" type="range" min="0" max="30" value="${cfg.rates[d]}"><output id="o${d}">${cfg.rates[d]}</output></div>`).join('');
+  DIRS.forEach(d => $('r'+d).addEventListener('input', e => { cfg.rates[d] = +e.target.value; $('o'+d).textContent = e.target.value; }));
+}
+/* ---------- "Why these timings?" : every number here is derived, nothing is a magic constant ---------- */
+function renderWhyTimings(){
+  const box = $('whyTimings'); box.textContent = '';
+  const row = (label, value, formula) => {
+    const d = document.createElement('div'); d.className = 'fx';
+    const b = document.createElement('b'); b.textContent = label;
+    const v = document.createElement('span'); v.textContent = value;
+    const f = document.createElement('i'); f.textContent = formula;
+    d.append(b, v, f); box.appendChild(d);
+  };
+  const vApp = toMps(APPROACH_SPEED_PX), vClr = toMps(CLEARANCE_SPEED_PX);
+  row('Scale', PX_PER_M + ' px/m', 'the ' + (2*HALF) + ' px carriageway is ' + toM(2*HALF).toFixed(1) + ' m wide; a ' + CLEARANCE_VEH_LEN_PX + ' px car is ' + toM(CLEARANCE_VEH_LEN_PX).toFixed(1) + ' m long');
+  row('Amber', cfg.amber.toFixed(2) + ' s', 'y = t_reaction + v / (2·a) = ' + REACTION_S + ' + ' + vApp.toFixed(1) + ' / (2 × ' + DECEL_MS2 + ') — a driver who reacts ' + REACTION_S + ' s late and then brakes at ' + DECEL_MS2 + ' m/s² still stops before the box');
+  row('All-red', cfg.allRed.toFixed(2) + ' s', 'x = (junction width + vehicle length) / clearance speed = (' + toM(JUNCTION_WIDTH_PX).toFixed(1) + ' + ' + toM(CLEARANCE_VEH_LEN_PX).toFixed(1) + ') / ' + vClr.toFixed(1) + ' — the last vehicle committed on amber clears the far kerb');
+  row('Lost time', ((cfg.amber + cfg.allRed) * 2).toFixed(2) + ' s', 'amber + all-red, once per phase, two phases per cycle — this is L in Webster’s cycle formula');
+}
+function setRates(p){ DIRS.forEach(d => { cfg.rates[d] = p[d]; $('r'+d).value = p[d]; $('o'+d).textContent = p[d]; }); }
+$('presets').addEventListener('click', e => { const b = e.target.closest('button'); if(b){ setRates(PRESETS[b.dataset.p]); doReset(); } });
+$('green').addEventListener('input', e => { cfg.green = +e.target.value; $('greenOut').textContent = e.target.value + 's'; });
+$('corridor').addEventListener('change', e => { cfg.corridor = e.target.checked; });
+
+function pressed(group, el){ group.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === el ? 'true' : 'false')); }
+document.querySelector('[aria-label="Signal control mode"]').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  mode = b.dataset.mode; pressed(b.parentNode, b); build();
+});
+$('speedSeg').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; speed = +b.dataset.speed; pressed(b.parentNode, b); });
+
+function setPaused(p){ paused = p; $('btnPause').textContent = p ? 'Resume' : 'Pause'; $('live').textContent = p ? 'Simulation paused' : 'Simulation running'; }
+function doReset(){ views.forEach(v => v.sim.reset()); setPaused(false); renderAll(); }
+function sendAmbulance(){
+  let d = $('ambDir').value; if(d === 'R') d = DIRS[Math.floor(Math.random()*4)];
+  views.forEach(v => v.sim.sendAmbulance(d));
+}
+$('btnPause').addEventListener('click', () => setPaused(!paused));
+$('btnReset').addEventListener('click', doReset);
+$('btnAmb').addEventListener('click', sendAmbulance);
+addEventListener('keydown', e => {
+  if(e.target.matches('input,select,textarea')) return;
+  if(e.code === 'Space'){ e.preventDefault(); setPaused(!paused); }
+  else if(e.key === 'r' || e.key === 'R') doReset();
+  else if(e.key === 'a' || e.key === 'A') sendAmbulance();
+});
+
+/* ---------- main loop (fixed time step, drawing separate from simulation) ---------- */
+let last = performance.now(), acc = 0, uiT = 0;
+function frame(now){
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if(!paused){
+    acc += dt * speed; let n = 0;
+    while(acc >= DT && n < 1200){ for(const v of views) v.sim.step(DT); acc -= DT; n++; }
+    if(n >= 1200) acc = 0;
+  }
+  for(const v of views) draw(v);
+  uiT += dt; if(uiT > 0.2){ uiT = 0; renderAll(); }
+  requestAnimationFrame(frame);
+}
+buildRates(); build(); requestAnimationFrame(frame);
+window.__views = () => views;
+</script>
+</body>
+</html>
