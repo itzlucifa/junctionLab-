@@ -11,8 +11,32 @@
 
 ---
 
-## About`r`n`r`nA four-way signalised junction you can watch, break and argue with — fixed-time, Webster-calculated and
+## About
+
+A four-way signalised junction you can watch, break and argue with — fixed-time, Webster-calculated and
 adaptive signal control competing for the same vehicles, in **one dependency-free HTML file**.
+
+### 🎥 Cinematic 3D Perspective View
+
+Switch to **3D · perspective** for a movie-screen rendering of the junction. Built entirely with a
+software rasteriser (no WebGL, no CDN), it delivers a real-life simulation vibe through:
+
+- **5 Camera Presets** — Orbit (isometric 45°), Street Eye (driver-level ground perspective), Top (90°
+  plan view), Gantry (overhead cantilever framing the slip lane), and Focus (tight cinematic zoom on the
+  yellow-box centre). Smooth transitions with fade-in opacity on every switch.
+- **3 Lighting Modes** — Day, Dusk, and Night. Each mode recolours the sky, fog density, ambient, sun
+  direction, and streetlight intensity. Night mode adds per-vehicle headlight beams, signal road-glow
+  halos, and warm window glows on buildings.
+- **Film-Grade Post Processing** — Vignette, color grading (warm amber for dusk, cool blue for night),
+  film grain overlay, and fog-based depth attenuation that makes distant queues fade into atmosphere.
+- **City Decorations Toggle** — Show surrounding buildings (HDFC Bank tower, Tech Park, apartments,
+  Apollo Pharmacy) with glowing windows at night, neem trees, bus shelters, and cobra-head streetlights.
+- **Live Countdown Timers** — Every signal head shows the remaining seconds for the current phase.
+- **Free Left Turn** — Protected slip-lane indicator with its own highlighted lane strip.
+
+[![3D View](https://img.shields.io/badge/🎥%20Cinematic%203D-Software%20Rasteriser-blue?style=for-the-badge)](https://github.com/itzlucifa/junctionLab-)
+[![AI Prompt Log](https://img.sields.io/badge/🧠%20AI%20Prompt%20Log-Real-time%20Analysis-green?style=for-the-badge)](index.html)
+[![Live Stats](https://img.shields.io/badge/📊%20Live%20Statistics-Real-time%20Chart-orange?style=for-the-badge)](index.html)
 
 [![CI](https://github.com/itzlucifa/junctionLab-/actions/workflows/ci.yml/badge.svg)](https://github.com/itzlucifa/junctionLab-/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -52,8 +76,16 @@ auto-rickshaws and buses, and an ambulance that expects to be let through.
 - **Metrics that mean something.** Throughput per hour, 95th-percentile wait, longest queue per arm, and an
   HCM level-of-service grade A–F.
 - **Reproducible.** Export a CSV of 10-second statistics, or copy the seed plus settings; paste the hash back to replay a run.
-- **Accessible.** `prefers-reduced-motion` respected, chart lines separated by dash pattern as well as colour,
-  signal changes announced through a debounced live region, keyboard shortcuts throughout.
+- **Cinematic 3D perspective view.** A software rasteriser (no WebGL, no CDN) that renders the junction
+  like a movie frame. Five camera presets (Orbit, Street Eye, Top, Gantry, Focus), three lighting modes
+  (Day, Dusk, Night), film-grade post-processing (vignette, color grading, film grain, fog), per-vehicle
+  headlight beams, signal road-glow halos, live countdown timers, and a toggleable city scene with
+  glowing buildings, neem trees, bus shelters, and cobra-head streetlights.
+- **AI Prompt Log.** A live log of every analysis prompt the simulator generates, with reasoning and
+  recommendations displayed in a modal. Prompts fire every second of simulation time.
+- **Live Statistics panel.** Real-time chart of queue length and average wait, plus a summary grid of
+  vehicles passed, average/P95 wait, throughput, collisions, and red-light runs.
+- **Free Left Turn.** Toggle a protected slip-lane indicator on each arm.
 
 ## Quick start
 

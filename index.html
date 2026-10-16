@@ -66,6 +66,9 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;padding:24p
   @media (max-width:1100px){main{grid-template-columns:1fr}}
   aside{margin-left:0}
   .simbox{background:rgba(14,14,16,.6);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(255,255,255,.11);border-radius:14px;padding:16px;margin:0 auto;max-width:980px;box-shadow:0 1px #ffffff0d inset,0 8px 32px rgba(0,0,0,.4)}
+  .simbox.cinematic{border:1px solid rgba(198,243,107,.25);box-shadow:0 0 60px rgba(198,243,107,.08) inset,0 12px 48px rgba(0,0,0,.6)}
+  .simbox canvas{border-radius:8px;transition:filter 0.5s ease}
+  .simbox.cinematic canvas{filter:saturate(1.15) contrast(1.08) brightness(1.02)}
   .simbox figcaption{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:12px}
   .simbox figcaption strong{font-size:14px;font-weight:560;letter-spacing:-.01em}
   .chip{display:inline-block;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);font-size:11.5px;color:var(--muted);font-family:ui-monospace,monospace;letter-spacing:.04em}
@@ -1121,10 +1124,10 @@ function drawDecorations(ctx){
 function draw3d(v){
     const ctx = v.ctx, sim = v.sim;
     ctx.setTransform(K, 0, 0, K, 0, 0);
-    let bgColor;
-    if(lightingMode === 'day'){ bgColor = '#1a212d'; }
-    else if(lightingMode === 'night'){ bgColor = '#050608'; }
-    else { bgColor = '#0c0f14'; }
+    let bgColor, fogColor, fogDensity;
+    if(lightingMode === 'day'){ bgColor = '#1a212d'; fogColor = 'rgba(26,33,45,0.6)'; }
+    else if(lightingMode === 'night'){ bgColor = '#050608'; fogColor = 'rgba(5,6,8,0.85)'; }
+    else { bgColor = '#0c0f14'; fogColor = 'rgba(12,15,20,0.75)'; }
     ctx.fillStyle = bgColor; ctx.fillRect(0, 0, W, W);
     V3.m = cam3d();
     f3d.length = 0;
@@ -1167,6 +1170,73 @@ function draw3d(v){
       if(f.fog){ const a = f.z / 1400; lit = shade(lit, 1 - a * 0.5); }
       ctx.fillStyle = lit; poly(ctx, f.pts); ctx.fill();
       ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 0.7 / K; poly(ctx, f.pts); ctx.stroke();
+    }
+    // Headlight beams for vehicles
+    if(lightingMode === 'night' || lightingMode === 'dusk'){
+      for(const d of DIRS){
+        const lane = sim.cars[d];
+        for(const c of lane){
+          const front = pos(d, c.s, c.off);
+          const fx = front.x, fz = front.y;
+          const fp = project3d({x: fx, y: 8, z: fz});
+          if(!fp) continue;
+          const beamLen = 300;
+          const bx = fx + Math.sin(headingAngle(d)) * beamLen;
+          const bz = fz - Math.cos(headingAngle(d)) * beamLen;
+          const bp = project3d({x: bx, y: 8, z: bz});
+          if(bp){
+            const grad = ctx.createLinearGradient(fp.x, fp.y, bp.x, bp.y);
+            grad.addColorStop(0, 'rgba(255,240,200,0.15)');
+            grad.addColorStop(1, 'rgba(255,240,200,0)');
+            ctx.fillStyle = grad;
+            ctx.beginPath();
+            ctx.moveTo(fp.x, fp.y);
+            ctx.lineTo(bp.x + 8, bp.y);
+            ctx.lineTo(bp.x - 8, bp.y);
+            ctx.closePath();
+            ctx.fill();
+          }
+        }
+      }
+    }
+    // Signal road glow
+    for(const d of DIRS){
+      const lamp = sim.lamp(AXIS[d]);
+      const p = pos(d, STOP - 6, HALF + 16);
+      const pr = project3d({x: p.x, y: 0, z: p.y});
+      if(!pr) continue;
+      let glowColor;
+      if(lamp === 'G') glowColor = 'rgba(54,217,132,';
+      else if(lamp === 'Y') glowColor = 'rgba(255,189,89,';
+      else glowColor = 'rgba(255,98,104,';
+      const pulse = 0.08 + 0.04 * Math.sin(sim.t * 8);
+      const r = 80 * V3.fov / pr.z * K;
+      const grad = ctx.createRadialGradient(pr.x, pr.y, 0, pr.x, pr.y, r);
+      grad.addColorStop(0, glowColor + '0.35)');
+      grad.addColorStop(0.5, glowColor + '0.10)');
+      grad.addColorStop(1, glowColor + '0)');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(pr.x, pr.y, r, 0, 7); ctx.fill();
+    }
+    // Film grain overlay
+    if(reduceMotion.matches){
+      const grain = ctx.createImageData(W, W);
+      for(let i = 0; i < grain.data.length; i += 4){
+        const n = (Math.random() - 0.5) * 12;
+        grain.data[i] = 255 + n; grain.data[i+1] = 255 + n; grain.data[i+2] = 255 + n; grain.data[i+3] = 18;
+      }
+      ctx.putImageData(grain, 0, 0);
+    }
+    // Vignette
+    const vig = ctx.createRadialGradient(C, C, 100, C, C, W * 0.7);
+    vig.addColorStop(0, 'rgba(0,0,0,0)');
+    vig.addColorStop(1, lightingMode === 'night' ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.35)');
+    ctx.fillStyle = vig; ctx.fillRect(0, 0, W, W);
+    // Color grading
+    if(lightingMode === 'dusk'){
+      ctx.fillStyle = 'rgba(255,180,100,0.04)'; ctx.fillRect(0, 0, W, W);
+    } else if(lightingMode === 'night'){
+      ctx.fillStyle = 'rgba(40,80,160,0.08)'; ctx.fillRect(0, 0, W, W);
     }
     if(showDecorations){
       const streetlights = [{x: 60, z: 60}, {x: W - 60, z: 60}, {x: 60, z: W - 60}, {x: W - 60, z: W - 60}];
@@ -1471,6 +1541,21 @@ document.querySelector('[aria-label="View"]').addEventListener('click', e => {
     showDecorations = !showDecorations;
     e.target.setAttribute('aria-pressed', showDecorations ? 'true' : 'false');
     e.target.textContent = showDecorations ? 'City ✓' : 'City';
+  });
+  document.querySelector('[aria-label="View"]').addEventListener('click', e => {
+    const b = e.target.closest('button'); if(!b) return;
+    view = b.dataset.view; pressed(b.parentNode, b);
+    const ctrl = $('view3dControls');
+    const fig = document.querySelector('.simbox');
+    if(view === '3d'){
+      ctrl.style.display = 'flex';
+      if(fig) fig.classList.add('cinematic');
+      if(fig){ fig.style.transition = 'opacity 0.6s ease'; fig.style.opacity = '0.5'; }
+      setTimeout(() => { if(fig) fig.style.opacity = '1'; }, 300);
+    } else { 
+      ctrl.style.display = 'none'; 
+      if(fig) fig.classList.remove('cinematic');
+    }
   });
 
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
