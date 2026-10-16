@@ -1,3 +1,8 @@
+﻿# Created by **Sumit Nawale** & **Nayan Dudkekar**
+
+![JunctionLab UI Preview](preview.png)
+
+> **JunctionLab** — A modern, interactive traffic signal simulation built for research, learning, and experimentation.
 # JunctionLab · चौक
 
 A four-way signalised junction you can watch, break and argue with — fixed-time, Webster-calculated and
