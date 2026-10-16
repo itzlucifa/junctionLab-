@@ -1,0 +1,15 @@
+{
+  "name": "junctionlab",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A four-way signalised junction simulator — fixed, Webster-calculated and adaptive signal control, in one dependency-free HTML file.",
+  "license": "MIT",
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/",
+    "benchmark": "node scripts/benchmark.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
