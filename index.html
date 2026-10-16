@@ -141,6 +141,23 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;padding:24p
       <button type="button" data-view="2d" aria-pressed="true">2D · top-down</button>
       <button type="button" data-view="3d" aria-pressed="false">3D · perspective</button>
     </div>
+    <div id="view3dControls" class="glass" style="display:none;padding:6px 8px;gap:6px;flex-wrap:wrap">
+      <div class="seg" role="group" aria-label="Camera preset" id="camPresetSeg">
+        <button type="button" data-cam="isometric" aria-pressed="true">Orbit</button>
+        <button type="button" data-cam="driver">Street</button>
+        <button type="button" data-cam="topDown">Top</button>
+        <button type="button" data-cam="gantry">Gantry</button>
+        <button type="button" data-cam="cinematic">Focus</button>
+      </div>
+      <div class="seg" role="group" aria-label="Lighting" id="lightSeg">
+        <button type="button" data-light="day">Day</button>
+        <button type="button" data-light="dusk" aria-pressed="true">Dusk</button>
+        <button type="button" data-light="night">Night</button>
+      </div>
+      <div class="seg" role="group" aria-label="Decorations">
+        <button type="button" id="btnDecor" aria-pressed="false">City</button>
+      </div>
+    </div>
     <div class="ctrls glass" style="padding:6px 8px;gap:6px">
       <button class="btn primary" id="btnPause" type="button">Pause</button>
       <button class="btn danger" id="btnReset" type="button">Reset</button>
@@ -151,10 +168,39 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;padding:24p
         <button type="button" data-speed="8" aria-pressed="false">8×</button>
       </div>
     </div>
-  </header>
+</header>
 
-<main>
-  <section style="display:grid;gap:18px;align-content:start;min-width:0">
+  <main>
+    <section style="display:grid;gap:18px;align-content:start;min-width:0">
+      <div class="panel wide">
+        <h2 style="font-size:11px;margin:0 0 14px;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);font-weight:600;font-family:ui-monospace,monospace">Live Statistics</h2>
+        <div class="ctrls" style="flex-wrap:wrap">
+          <button class="btn" type="button" id="btnStats" style="flex:1;min-width:140px">📊 Live stats</button>
+          <button class="btn" type="button" id="btnPromptLog" style="flex:1;min-width:140px">🧠 AI Prompt Log</button>
+          <button class="btn" type="button" id="btnTimeline" style="flex:1;min-width:140px">📈 Timeline</button>
+        </div>
+      </div>
+      <div id="liveStats" class="panel" style="display:none">
+        <h2 style="font-size:11px;margin:0 0 14px;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);font-weight:600;font-family:ui-monospace,monospace">Live Statistics</h2>
+        <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+          <div class="tile"><div class="k">Vehicles passed</div><div class="v" id="lsPassed">0</div></div>
+          <div class="tile"><div class="k">Average wait</div><div class="v"><span id="lsAvg">0.0</span><small> s</small></div></div>
+          <div class="tile"><div class="k">P95 wait</div><div class="v"><span id="lsP95">0.0</span><small> s</small></div></div>
+          <div class="tile"><div class="k">Throughput</div><div class="v"><span id="lsTph">0</span><small> /h</small></div></div>
+          <div class="tile"><div class="k">Collisions</div><div class="v" id="lsColl">0</div></div>
+          <div class="tile"><div class="k">Red-light runs</div><div class="v" id="lsRed">0</div></div>
+        </div>
+        <canvas id="liveChart" role="img" aria-label="Live statistics chart" style="width:100%;height:180px;margin-top:14px"></canvas>
+      </div>
+      <div id="promptLogModal" class="modal" style="display:none;position:fixed;inset:0;z-index:100;align-items:center;justify-content:center;background:rgba(0,0,0,.7);backdrop-filter:blur(8px)">
+        <div class="panel" style="max-width:720px;width:92%;max-height:80vh;overflow:auto">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <h2 style="font-size:11px;margin:0;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);font-weight:600;font-family:ui-monospace,monospace">AI Prompt Log</h2>
+            <button class="btn" id="btnClosePromptLog" type="button">Close</button>
+          </div>
+          <div id="promptLogContent" style="font-family:ui-monospace,monospace;font-size:13px;line-height:1.6;color:var(--text)"></div>
+        </div>
+      </div>
     <div class="verdict glass" id="verdict" aria-live="polite"></div>
     <div class="stage" id="stage"></div>
 
@@ -228,6 +274,7 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;padding:24p
         <button class="btn" id="btnAmb" type="button" style="flex:1">Send ambulance (108)</button>
       </div>
       <label class="check"><input type="checkbox" id="corridor" checked> Green corridor for emergency vehicles</label>
+      <label class="check"><input type="checkbox" id="freeLeft" checked> Free left turn (protected slip)</label>
       <p class="note">With the corridor on, signals clear the ambulance's arm and queued vehicles make way. Switch it off to see the delay it normally causes.</p>
     </div>
 
@@ -752,13 +799,13 @@ const PRESETS = {
   stress:{N:22,E:22,S:22,W:22}
 };
 const DEFAULT_CFG = {rates:{N:8,E:8,S:8,W:8}, green:12, amber:amberOf(), allRed:allRedOf(),
-                     corridor:true, surge:null, leftTurnFrac:0, satFlow:0};
+                      corridor:true, surge:null, leftTurnFrac:0, satFlow:0, freeLeft:true};
 // ==CORE-END==
 
 /* ================= UI and drawing ================= */
 const cfg = {rates:Object.assign({}, DEFAULT_CFG.rates), green:DEFAULT_CFG.green,
              amber:DEFAULT_CFG.amber, allRed:DEFAULT_CFG.allRed, corridor:DEFAULT_CFG.corridor,
-             surge:null, leftTurnFrac:0};
+             surge:null, leftTurnFrac:0, freeLeft:DEFAULT_CFG.freeLeft};
 const SEED = 20261016;
 const DPR = Math.min(2, window.devicePixelRatio || 1);
 const K = DPR;
@@ -863,51 +910,71 @@ function drawVehicle(ctx, d, c, tNow){
   ctx.restore();
 }
 
-function drawSignal(ctx, d, lamp){
-  const p = pos(d, STOP-6, HALF+16);
-  ctx.save(); ctx.translate(p.x, p.y);
-  ctx.fillStyle = '#0b0f13'; rr(ctx,-11,-30,22,60,6); ctx.fill();
-  ctx.strokeStyle = '#4a5764'; ctx.lineWidth = 1.5; ctx.stroke();
-  const lamps = [['R',-19,'#FF6268'],['Y',0,'#FFBD59'],['G',19,'#36D98A']];
-  for(const [k,y,col] of lamps){
-    const lit = lamp === k;
-    ctx.beginPath(); ctx.arc(0,y,7.2,0,7);
-    ctx.fillStyle = lit ? col : '#1c242c'; ctx.fill();
-    ctx.strokeStyle = lit ? '#ffffff' : '#3a4651'; ctx.lineWidth = lit ? 2 : 1; ctx.stroke();
-    if(lit){
-      ctx.fillStyle = '#10151a';
-      if(k === 'R') ctx.fillRect(-3.2,y-3.2,6.4,6.4);
-      else if(k === 'Y'){ ctx.beginPath(); ctx.moveTo(0,y-4); ctx.lineTo(4,y+3); ctx.lineTo(-4,y+3); ctx.closePath(); ctx.fill(); }
-      else { ctx.beginPath(); ctx.arc(0,y,3,0,7); ctx.fill(); }
+function drawSignal(ctx, d, lamp, sim){
+    const p = pos(d, STOP-6, HALF+16);
+    ctx.save(); ctx.translate(p.x, p.y);
+    ctx.fillStyle = '#0b0f13'; rr(ctx,-11,-30,22,60,6); ctx.fill();
+    ctx.strokeStyle = '#4a5764'; ctx.lineWidth = 1.5; ctx.stroke();
+    const lamps = [['R',-19,'#FF6268'],['Y',0,'#FFBD59'],['G',19,'#36D98A']];
+    for(const [k,y,col] of lamps){
+      const lit = lamp === k;
+      ctx.beginPath(); ctx.arc(0,y,7.2,0,7);
+      ctx.fillStyle = lit ? col : '#1c242c'; ctx.fill();
+      ctx.strokeStyle = lit ? '#ffffff' : '#3a4651'; ctx.lineWidth = lit ? 2 : 1; ctx.stroke();
+      if(lit){
+        ctx.fillStyle = '#10151a';
+        if(k === 'R') ctx.fillRect(-3.2,y-3.2,6.4,6.4);
+        else if(k === 'Y'){ ctx.beginPath(); ctx.moveTo(0,y-4); ctx.lineTo(4,y+3); ctx.lineTo(-4,y+3); ctx.closePath(); ctx.fill(); }
+        else { ctx.beginPath(); ctx.arc(0,y,3,0,7); ctx.fill(); }
+      }
+    }
+    ctx.restore();
+    const label = lamp === 'G' ? 'GO' : lamp === 'Y' ? 'WAIT' : 'STOP';
+    const lc = lamp === 'G' ? '#36D98A' : lamp === 'Y' ? '#FFBD59' : '#FF6268';
+    const q = pos(d, STOP-52, HALF+16);
+    ctx.font = '800 15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(label).width + 16;
+    ctx.fillStyle = 'rgba(8,11,14,.85)'; rr(ctx,q.x-tw/2,q.y-11,tw,22,7); ctx.fill();
+    ctx.strokeStyle = lc; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = lc; ctx.fillText(label, q.x, q.y+1);
+    if(sim){
+      const ax = AXIS[d];
+      const c = sim.ctl;
+      let remain = 0;
+      if(lamp === 'G') remain = sim.greenTarget(ax) - c.timer;
+      else if(lamp === 'Y') remain = sim.cfg.amber - c.timer;
+      else remain = sim.cfg.allRed - c.timer;
+      remain = Math.max(0, Math.ceil(remain));
+      const ct = pos(d, STOP-78, HALF+16);
+      ctx.font = '700 13px system-ui,sans-serif';
+      ctx.fillStyle = '#ffffff'; ctx.fillText(remain + 's', ct.x, ct.y);
     }
   }
-  ctx.restore();
-const label = lamp === 'G' ? 'GO' : lamp === 'Y' ? 'WAIT' : 'STOP';
-    const lc = lamp === 'G' ? '#36D98A' : lamp === 'Y' ? '#FFBD59' : '#FF6268';
-  const q = pos(d, STOP-52, HALF+16);
-  ctx.font = '800 15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  const tw = ctx.measureText(label).width + 16;
-  ctx.fillStyle = 'rgba(8,11,14,.85)'; rr(ctx,q.x-tw/2,q.y-11,tw,22,7); ctx.fill();
-  ctx.strokeStyle = lc; ctx.lineWidth = 2; ctx.stroke();
-  ctx.fillStyle = lc; ctx.fillText(label, q.x, q.y+1);
-}
 
 function draw2d(v){
-  const ctx = v.ctx, sim = v.sim;
-  ctx.setTransform(K,0,0,K,0,0);
-  ctx.drawImage(bg, 0, 0, W, W);
-  // green corridor highlight
-  if(sim.ambDir && cfg.corridor){
-    const pulse = reduceMotion.matches ? 0.22 : 0.18 + 0.10*Math.sin(sim.t*6);
-    ctx.fillStyle = 'rgba(54,217,132,' + pulse + ')';
-    laneRect(ctx, sim.ambDir, 0, W, 0, HALF);
-  }
+    const ctx = v.ctx, sim = v.sim;
+    ctx.setTransform(K,0,0,K,0,0);
+    ctx.drawImage(bg, 0, 0, W, W);
+    // green corridor highlight
+    if(sim.ambDir && cfg.corridor){
+      const pulse = reduceMotion.matches ? 0.22 : 0.18 + 0.10*Math.sin(sim.t*6);
+      ctx.fillStyle = 'rgba(54,217,132,' + pulse + ')';
+      laneRect(ctx, sim.ambDir, 0, W, 0, HALF);
+    }
+    // free left turn slip lane indicator
+    if(cfg.freeLeft){
+      for(const d of DIRS){
+        const slipColor = (sim.lamp(AXIS[d]) === 'G') ? 'rgba(54,217,132,0.18)' : 'rgba(255,189,89,0.12)';
+        ctx.fillStyle = slipColor;
+        laneRect(ctx, d, STOP - 30, STOP + 3, HALF + 4, HALF + 18);
+      }
+    }
   for(const d of DIRS){
     const lane = sim.cars[d];
     for(let i = lane.length-1; i >= 0; i--) drawVehicle(ctx, d, lane[i], sim.t);
   }
   for(const d of DIRS) for(const a of sim.amb[d]) drawVehicle(ctx, d, a, sim.t);
-  DIRS.forEach(d => drawSignal(ctx, d, sim.lamp(AXIS[d])));
+  DIRS.forEach(d => drawSignal(ctx, d, sim.lamp(AXIS[d]), sim));
   if(sim.ambDir){
     const txt = cfg.corridor ? 'AMBULANCE 108 · GREEN CORRIDOR · ' + NAMES[sim.ambDir].toUpperCase()
                              : 'AMBULANCE 108 · NO CORRIDOR · ' + NAMES[sim.ambDir].toUpperCase();
@@ -920,17 +987,33 @@ function draw2d(v){
 }
 
 /* ---------- 3D perspective view (software renderer, no WebGL, no CDN) ---------- */
-  const V3 = {fov: 1100, near: 0.8, eye: {x: C + 820, y: 640, z: C + 820}, cx: C, cy: C, blockH: 210};
-  const CAR_H = {bike: 12, car: 18, auto: 20, bus: 27, amb: 22};
-function cam3d(){
-  const e = V3.eye;
-  let fx = V3.cx - e.x, fy = 0 - e.y, fz = V3.cy - e.z, n = Math.sqrt(fx * fx + fy * fy + fz * fz);
-  fx /= n; fy /= n; fz /= n;
-  let rx = -fz, ry = 0, rz = fx, rn = Math.sqrt(rx * rx + rz * rz); rx /= rn; rz /= rn;
-  let ux = -rz * fy, uy = rz * fx + fz * fz, uz = -fz * fy, un = Math.sqrt(ux * ux + uy * uy + uz * uz);
-  ux /= un; uy /= un; uz /= un;
-  return {ex: e.x, ey: e.y, ez: e.z, fx, fy, fz, rx, ry, rz, ux, uy, uz};
-}
+  const V3 = {fov: 1200, near: 0.5, eye: {x: C + 900, y: 560, z: C + 900}, cx: C, cy: C, blockH: 230, target: {x: C, y: 0, z: C}};
+  const CAR_H = {bike: 11, car: 17, auto: 19, bus: 26, amb: 21};
+  const LIGHT_DIR = {x: 0.55, y: -0.85, z: 0.15};
+  let camPreset = 'isometric', lightingMode = 'dusk', showDecorations = false;
+  function lightFactor(nx, ny, nz){
+    const dot = nx * LIGHT_DIR.x + ny * LIGHT_DIR.y + nz * LIGHT_DIR.z;
+    return 0.35 + 0.65 * Math.max(0, dot);
+  }
+  function applyCamPreset(preset){
+    camPreset = preset;
+    const e = V3.eye;
+    if(preset === 'isometric'){ e.x = C + 900; e.y = 560; e.z = C + 900; V3.target = {x: C, y: 0, z: C}; }
+    else if(preset === 'driver'){ e.x = C + 300; e.y = 260; e.z = C + 1400; V3.target = {x: C, y: 80, z: C - 300}; }
+    else if(preset === 'topDown'){ e.x = C; e.y = 1400; e.z = C + 20; V3.target = {x: C, y: 0, z: C}; }
+    else if(preset === 'gantry'){ e.x = C + 500; e.y = 420; e.z = C + 1100; V3.target = {x: C + 120, y: 120, z: C + 300}; }
+    else if(preset === 'cinematic'){ e.x = C + 700; e.y = 400; e.z = C + 700; V3.target = {x: C, y: 0, z: C}; }
+  }
+  function setLightingMode(mode){ lightingMode = mode; }
+  function cam3d(){
+    const e = V3.eye, t = V3.target;
+    let fx = t.x - e.x, fy = t.y - e.y, fz = t.z - e.z, n = Math.sqrt(fx * fx + fy * fy + fz * fz);
+    fx /= n; fy /= n; fz /= n;
+    let rx = -fz, ry = 0, rz = fx, rn = Math.sqrt(rx * rx + rz * rz); rx /= rn; rz /= rn;
+    let ux = -rz * fy, uy = rz * fx + fz * fz, uz = -fz * fy, un = Math.sqrt(ux * ux + uy * uy + uz * uz);
+    ux /= un; uy /= un; uz /= un;
+    return {ex: e.x, ey: e.y, ez: e.z, fx, fy, fz, rx, ry, rz, ux, uy, uz};
+  }
 function project3d(p){
   const m = V3.m;
   const dx = p.x - m.ex, dy = p.y - m.ey, dz = p.z - m.ez;
@@ -942,12 +1025,14 @@ function project3d(p){
   return {x: V3.cx + x * k, y: V3.cy - y * k, z};
 }
 const f3d = [];
-function pushFace(pts, color){
-  const pp = pts.map(project3d);
-  if(pp.some(p => !p)) return;
-  let z = 0; for(const p of pp) z += p.z; z /= 4;
-  f3d.push({pts: pp, color, z});
-}
+  function pushFace(pts, color, normal, fog){
+    const pp = pts.map(project3d);
+    if(pp.some(p => !p)) return;
+    let z = 0; for(const p of pp) z += p.z; z /= 4;
+    let shadeF = 1;
+    if(normal){ shadeF = lightFactor(normal.x, normal.y, normal.z); }
+    f3d.push({pts: pp, color, z, shade: shadeF, fog: fog || false});
+  }
 function shade(col, f){
   const mt = col.match(/#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i);
   if(!mt) return col;
@@ -975,15 +1060,17 @@ function addCar(c){
     const B01 = worldPt(dir, sf, ll, 0), B11 = worldPt(dir, sf, lr, 0);
     const T00 = worldPt(dir, sb, ll, h), T10 = worldPt(dir, sb, lr, h);
     const T01 = worldPt(dir, sf, ll, h), T11 = worldPt(dir, sf, lr, h);
-    pushFace([T01, T11, T10, T00], col);
-    pushFace([B01, B11, T11, T01], shade(col, 0.72));
-    pushFace([B00, B10, T10, T00], shade(col, 0.55));
-    pushFace([B00, B01, T01, T00], shade(col, 0.6));
-    pushFace([B11, B10, T10, T11], shade(col, 0.6));
+    const heading = headingAngle(dir);
+    const nx = Math.sin(heading), ny = 0, nz = -Math.cos(heading);
+    pushFace([T01, T11, T10, T00], col, {x: 0, y: 1, z: 0});
+    pushFace([B01, B11, T11, T01], col, {x: nx, y: 0, z: nz});
+    pushFace([B00, B10, T10, T00], col, {x: -nx, y: 0, z: -nz});
+    pushFace([B00, B01, T01, T00], col, {x: 0, y: 0, z: nz});
+    pushFace([B11, B10, T10, T11], col, {x: 0, y: 0, z: -nz});
   }
-function addSignal(ctx, dir, lamp){
+  function addSignal(ctx, dir, lamp, sim){
     const p = pos(dir, STOP - 6, HALF + 16), px = p.x, pz = p.y;
-    pushFace([{x: px - 3, y: 0, z: pz - 1}, {x: px + 3, y: 0, z: pz + 1}, {x: px + 3, y: 150, z: pz + 1}, {x: px - 3, y: 150, z: pz - 1}], '#1c242c');
+    pushFace([{x: px - 3, y: 0, z: pz - 1}, {x: px + 3, y: 0, z: pz + 1}, {x: px + 3, y: 150, z: pz + 1}, {x: px - 3, y: 150, z: pz - 1}], '#1c242c', {x: 0, y: 1, z: 0});
     const lamps = [['R', 112, '#FF6268'], ['Y', 142, '#FFBD59'], ['G', 172, '#36D98A']];
     for(const [k, y, col] of lamps){
       const pr = project3d({x: px, y, z: pz});
@@ -995,22 +1082,61 @@ function addSignal(ctx, dir, lamp){
       else { ctx.strokeStyle = '#3a4651'; ctx.lineWidth = 1 / K; }
       ctx.stroke();
     }
+    if(sim){
+      const ax = AXIS[dir];
+      const c = sim.ctl;
+      let remain = 0;
+      if(lamp === 'G') remain = sim.greenTarget(ax) - c.timer;
+      else if(lamp === 'Y') remain = sim.cfg.amber - c.timer;
+      else remain = sim.cfg.allRed - c.timer;
+      remain = Math.max(0, Math.ceil(remain));
+      const txt = remain + 's';
+      const pr = project3d({x: px, y: 198, z: pz});
+      if(pr){
+        const r = 6 * V3.fov / pr.z * K;
+        ctx.font = '700 ' + (r * 1.6) + 'px system-ui,sans-serif';
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff'; ctx.fillText(txt, pr.x, pr.y);
+      }
+    }
+  }
+function drawDecorations(ctx){
+    const decor = [
+      {x: 30, z: 30, h: 180, col: '#2a3340'},
+      {x: W - 60, z: 40, h: 240, col: '#2c3a4a'},
+      {x: 50, z: W - 70, h: 160, col: '#243040'},
+      {x: W - 50, z: W - 60, h: 200, col: '#2a3340'},
+      {x: C + 200, z: -200, h: 140, col: '#23303a'},
+      {x: -200, z: C + 200, h: 150, col: '#2c3a4a'}
+    ];
+    for(const b of decor){
+      const w = 40, d = 40;
+      pushFace([{x: b.x - w/2, y: b.h, z: b.z - d/2}, {x: b.x + w/2, y: b.h, z: b.z - d/2}, {x: b.x + w/2, y: b.h, z: b.z + d/2}, {x: b.x - w/2, y: b.h, z: b.z + d/2}], b.col, {x: 0, y: 1, z: 0});
+      pushFace([{x: b.x - w/2, y: 0, z: b.z - d/2}, {x: b.x - w/2, y: 0, z: b.z + d/2}, {x: b.x - w/2, y: b.h, z: b.z + d/2}, {x: b.x - w/2, y: b.h, z: b.z - d/2}], b.col, {x: -1, y: 0, z: 0});
+      pushFace([{x: b.x + w/2, y: 0, z: b.z - d/2}, {x: b.x + w/2, y: b.h, z: b.z - d/2}, {x: b.x + w/2, y: b.h, z: b.z + d/2}, {x: b.x + w/2, y: 0, z: b.z + d/2}], b.col, {x: 1, y: 0, z: 0});
+      pushFace([{x: b.x - w/2, y: 0, z: b.z - d/2}, {x: b.x + w/2, y: 0, z: b.z - d/2}, {x: b.x + w/2, y: b.h, z: b.z - d/2}, {x: b.x - w/2, y: b.h, z: b.z - d/2}], b.col, {x: 0, y: 0, z: -1});
+      pushFace([{x: b.x - w/2, y: 0, z: b.z + d/2}, {x: b.x + w/2, y: b.h, z: b.z + d/2}, {x: b.x + w/2, y: 0, z: b.z + d/2}, {x: b.x - w/2, y: 0, z: b.z + d/2}], b.col, {x: 0, y: 0, z: 1});
+    }
   }
 function draw3d(v){
     const ctx = v.ctx, sim = v.sim;
     ctx.setTransform(K, 0, 0, K, 0, 0);
-    ctx.fillStyle = '#020305'; ctx.fillRect(0, 0, W, W);
+    let bgColor;
+    if(lightingMode === 'day'){ bgColor = '#1a212d'; }
+    else if(lightingMode === 'night'){ bgColor = '#050608'; }
+    else { bgColor = '#0c0f14'; }
+    ctx.fillStyle = bgColor; ctx.fillRect(0, 0, W, W);
     V3.m = cam3d();
     f3d.length = 0;
-    pushFace([{x: -500, y: 0, z: -500}, {x: 1260, y: 0, z: -500}, {x: 1260, y: 0, z: 1260}, {x: -500, y: 0, z: 1260}], '#020305');
-    groundRect(C - HALF, -300, C + HALF, W + 300, '#1a1d22');
-    groundRect(-300, C - HALF, W + 300, C + HALF, '#1a1d22');
-    groundRect(C - 2, -300, C + 2, W + 300, 'rgba(255,189,89,0.5)');
-    groundRect(-300, C - 2, W + 300, C + 2, 'rgba(255,189,89,0.5)');
-    groundRect(BOX_S, BOX_S, BOX_E, BOX_E, '#23272e');
+    pushFace([{x: -500, y: 0, z: -500}, {x: 1260, y: 0, z: -500}, {x: 1260, y: 0, z: 1260}, {x: -500, y: 0, z: 1260}], bgColor, {x: 0, y: 1, z: 0});
+    groundRect(C - HALF, -300, C + HALF, W + 300, '#1a1d22', {x: 0, y: 1, z: 0});
+    groundRect(-300, C - HALF, W + 300, C + HALF, '#1a1d22', {x: 0, y: 1, z: 0});
+    groundRect(C - 2, -300, C + 2, W + 300, 'rgba(255,189,89,0.5)', {x: 0, y: 1, z: 0});
+    groundRect(-300, C - 2, W + 300, C + 2, 'rgba(255,189,89,0.5)', {x: 0, y: 1, z: 0});
+    groundRect(BOX_S, BOX_S, BOX_E, BOX_E, '#23272e', {x: 0, y: 1, z: 0});
     DIRS.forEach(d => {
-      for(let lat = -HALF; lat < HALF; lat += 12) pushFace(laneQuad(d, STOP + 7, STOP + 23, lat, lat + 6), 'rgba(240,240,240,0.92)');
-      pushFace(laneQuad(d, STOP - 1, STOP + 3, 0, HALF), '#ffffff');
+      for(let lat = -HALF; lat < HALF; lat += 12) pushFace(laneQuad(d, STOP + 7, STOP + 23, lat, lat + 6), 'rgba(240,240,240,0.92)', {x: 0, y: 1, z: 0});
+      pushFace(laneQuad(d, STOP - 1, STOP + 3, 0, HALF), '#ffffff', {x: 0, y: 1, z: 0});
     });
     const blocks = [
       [4, 4, C - HALF - 4, C - HALF - 4, '#243040'],
@@ -1020,15 +1146,16 @@ function draw3d(v){
     ];
     blocks.forEach(([x1, z1, x2, z2, col]) => {
       const h = V3.blockH;
-      pushFace([{x: x1, y: h, z: z1}, {x: x2, y: h, z: z1}, {x: x2, y: h, z: z2}, {x: x1, y: h, z: z2}], col);
-      pushFace([{x: x1, y: 0, z: z1}, {x: x1, y: 0, z: z2}, {x: x1, y: h, z: z2}, {x: x1, y: h, z: z1}], shade(col, 0.65));
-      pushFace([{x: x2, y: 0, z: z1}, {x: x2, y: h, z: z1}, {x: x2, y: h, z: z2}, {x: x2, y: 0, z: z2}], shade(col, 0.65));
-      pushFace([{x: x1, y: 0, z: z1}, {x: x2, y: 0, z: z1}, {x: x2, y: h, z: z1}, {x: x1, y: h, z: z1}], shade(col, 0.55));
-      pushFace([{x: x1, y: 0, z: z2}, {x: x2, y: h, z: z2}, {x: x2, y: 0, z: z2}, {x: x1, y: 0, z: z2}], shade(col, 0.55));
+      pushFace([{x: x1, y: h, z: z1}, {x: x2, y: h, z: z1}, {x: x2, y: h, z: z2}, {x: x1, y: h, z: z2}], col, {x: 0, y: 1, z: 0});
+      pushFace([{x: x1, y: 0, z: z1}, {x: x1, y: 0, z: z2}, {x: x1, y: h, z: z2}, {x: x1, y: h, z: z1}], col, {x: -1, y: 0, z: 0});
+      pushFace([{x: x2, y: 0, z: z1}, {x: x2, y: h, z: z1}, {x: x2, y: h, z: z2}, {x: x2, y: 0, z: z2}], col, {x: 1, y: 0, z: 0});
+      pushFace([{x: x1, y: 0, z: z1}, {x: x2, y: 0, z: z1}, {x: x2, y: h, z: z1}, {x: x1, y: h, z: z1}], col, {x: 0, y: 0, z: -1});
+      pushFace([{x: x1, y: 0, z: z2}, {x: x2, y: h, z: z2}, {x: x2, y: 0, z: z2}, {x: x1, y: 0, z: z2}], col, {x: 0, y: 0, z: 1});
     });
+    if(showDecorations) drawDecorations(ctx);
     for(const d of DIRS){ const lane = sim.cars[d]; for(let i = lane.length - 1; i >= 0; i--) addCar(lane[i]); }
     for(const d of DIRS) for(const a of sim.amb[d]) addCar(a);
-    DIRS.forEach(d => addSignal(ctx, d, sim.lamp(AXIS[d])));
+    DIRS.forEach(d => addSignal(ctx, d, sim.lamp(AXIS[d]), sim));
     if(sim.ambDir && cfg.corridor){
       const pulse = reduceMotion.matches ? 0.22 : 0.18 + 0.10 * Math.sin(sim.t * 6);
       const q = laneQuad(sim.ambDir, 0, W, 0, HALF).map(project3d);
@@ -1036,8 +1163,28 @@ function draw3d(v){
     }
     f3d.sort((a, b) => b.z - a.z);
     for(const f of f3d){
-      ctx.fillStyle = f.color; poly(ctx, f.pts); ctx.fill();
-      ctx.strokeStyle = 'rgba(0,0,0,0.2)'; ctx.lineWidth = 0.8 / K; poly(ctx, f.pts); ctx.stroke();
+      let lit = shade(f.color, f.shade || 1);
+      if(f.fog){ const a = f.z / 1400; lit = shade(lit, 1 - a * 0.5); }
+      ctx.fillStyle = lit; poly(ctx, f.pts); ctx.fill();
+      ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 0.7 / K; poly(ctx, f.pts); ctx.stroke();
+    }
+    if(showDecorations){
+      const streetlights = [{x: 60, z: 60}, {x: W - 60, z: 60}, {x: 60, z: W - 60}, {x: W - 60, z: W - 60}];
+      for(const sl of streetlights){
+        const pole = project3d({x: sl.x, y: 0, z: sl.z});
+        if(!pole) continue;
+        const pr = project3d({x: sl.x, y: 120, z: sl.z});
+        if(!pr) continue;
+        ctx.strokeStyle = '#1c242c'; ctx.lineWidth = 2 / K;
+        ctx.beginPath(); ctx.moveTo(pole.x, pole.y); ctx.lineTo(pr.x, pr.y); ctx.stroke();
+        const lamp = project3d({x: sl.x + 30, y: 110, z: sl.z});
+        if(lamp){
+          const r = 3 * V3.fov / lamp.z * K;
+          ctx.beginPath(); ctx.arc(lamp.x, lamp.y, r, 0, 7);
+          ctx.fillStyle = (lightingMode === 'night') ? '#FFD166' : '#FFBD59'; ctx.fill();
+          ctx.strokeStyle = '#020305'; ctx.lineWidth = 1 / K; ctx.stroke();
+        }
+      }
     }
     if(sim.ambDir){
       const txt = cfg.corridor ? 'AMBULANCE 108 · GREEN CORRIDOR · ' + NAMES[sim.ambDir].toUpperCase()
@@ -1099,12 +1246,20 @@ function build(){
 }
 
 function lampText(l){ return l === 'G' ? 'GO' : l === 'Y' ? 'WAIT' : 'STOP'; }
-function renderStats(v){
-  const s = v.sim, st = s.stats, e = v.el;
-  e.clock.textContent = mmss(s.t);
-  const ns = s.lamp(0), ew = s.lamp(1);
-  e.ns.className = 'pill ' + ns; e.ns.textContent = 'North–South: ' + lampText(ns);
-  e.ew.className = 'pill ' + ew; e.ew.textContent = 'East–West: ' + lampText(ew);
+  function signalCountdown(s, axis){
+    const c = s.ctl;
+    let remain = 0;
+    if(s.lamp(axis) === 'G') remain = s.greenTarget(axis) - c.timer;
+    else if(s.lamp(axis) === 'Y') remain = s.cfg.amber - c.timer;
+    else remain = s.cfg.allRed - c.timer;
+    return Math.max(0, Math.ceil(remain));
+  }
+  function renderStats(v){
+    const s = v.sim, st = s.stats, e = v.el;
+    e.clock.textContent = mmss(s.t);
+    const ns = s.lamp(0), ew = s.lamp(1);
+    e.ns.className = 'pill ' + ns; e.ns.textContent = 'North–South: ' + lampText(ns) + ' · ' + signalCountdown(s, 0) + 's';
+    e.ew.className = 'pill ' + ew; e.ew.textContent = 'East–West: ' + lampText(ew) + ' · ' + signalCountdown(s, 1) + 's';
   e.passed.textContent = st.passed;
   e.avg.textContent = fmt(s.avgWait());
   e.longest.textContent = fmt(s.longestWait());
@@ -1217,8 +1372,22 @@ function drawChart(){
   g.fillText('queue (veh, left axis) · average wait (s, right axis)', pad.l, 8);
 }
 function renderAll(){
-  views.forEach(renderStats);
-  const s = views.length ? views[0].sim : null, su = $('surgeState');
+    if(typeof renderAll.lastT === 'undefined') renderAll.lastT = -1;
+    views.forEach(renderStats);
+    renderLiveStats();
+    const s = views.length ? views[0].sim : null, su = $('surgeState');
+    if(s && Math.floor(s.t) !== renderAll.lastT){
+      renderAll.lastT = Math.floor(s.t);
+      const mode = s.mode, wait = s.avgWait(), throughput = s.throughputPerHour();
+      addAIPrompt(
+        `Analyze junction performance at t=${Math.floor(s.t)}s. Mode=${mode}. Avg wait=${fmt(wait)}s. Throughput=${Math.round(throughput)}/h. Collisions=${s.stats.collisions}. Red violations=${s.stats.redViol}. Recommend adjustment.`,
+        `The ${mode} strategy currently shows ${fmt(wait)}s average wait with ${Math.round(throughput)}/h throughput. ` +
+        `Queue pressure is ${s.pressure(0).toFixed(1)} (NS) vs ${s.pressure(1).toFixed(1)} (EW). ` +
+        (s.stats.collisions > 0 ? 'Collision risk detected — consider increasing amber or all-red.' :
+         throughput < 600 ? 'Throughput is low — consider increasing green time.' :
+         'Performance is within acceptable bounds.')
+      );
+    }
   if(cfg.surge && s){
     const m = cfg.surge.pattern[s.surgeBlock], ns = m.ns > m.ew ? 'North–South' : 'East–West';
     const heavy = Math.max(m.ns, m.ew).toFixed(1), light = Math.min(m.ns, m.ew).toFixed(1);
@@ -1274,6 +1443,7 @@ $('presets').addEventListener('click', e => {
 });
 $('green').addEventListener('input', e => { cfg.green = +e.target.value; $('greenOut').textContent = e.target.value + 's'; });
 $('corridor').addEventListener('change', e => { cfg.corridor = e.target.checked; });
+  $('freeLeft').addEventListener('change', e => { cfg.freeLeft = e.target.checked; });
 
 function pressed(group, el){ group.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b === el ? 'true' : 'false')); }
 document.querySelector('[aria-label="Signal control mode"]').addEventListener('click', e => {
@@ -1283,17 +1453,111 @@ document.querySelector('[aria-label="Signal control mode"]').addEventListener('c
 $('speedSeg').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; speed = +b.dataset.speed; pressed(b.parentNode, b); });
 
 document.querySelector('[aria-label="View"]').addEventListener('click', e => {
-  const b = e.target.closest('button'); if(!b) return;
-  view = b.dataset.view; pressed(b.parentNode, b);
-});
+    const b = e.target.closest('button'); if(!b) return;
+    view = b.dataset.view; pressed(b.parentNode, b);
+    const ctrl = $('view3dControls');
+    if(view === '3d'){ ctrl.style.display = 'flex'; }
+    else { ctrl.style.display = 'none'; }
+  });
+  $('camPresetSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if(!b) return;
+    applyCamPreset(b.dataset.cam); pressed(b.parentNode, b);
+  });
+  $('lightSeg').addEventListener('click', e => {
+    const b = e.target.closest('button'); if(!b) return;
+    setLightingMode(b.dataset.light); pressed(b.parentNode, b);
+  });
+  $('btnDecor').addEventListener('click', e => {
+    showDecorations = !showDecorations;
+    e.target.setAttribute('aria-pressed', showDecorations ? 'true' : 'false');
+    e.target.textContent = showDecorations ? 'City ✓' : 'City';
+  });
 
-function setPaused(p){ paused = p; $('btnPause').textContent = p ? 'Resume' : 'Pause'; $('live').textContent = p ? 'Simulation paused' : 'Simulation running'; }
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+  const aiPromptLog = [];
+  function addAIPrompt(prompt, response, mode){
+    aiPromptLog.push({t: Math.round(views[0]?.sim?.t || 0), prompt, response, mode});
+    if(aiPromptLog.length > 50) aiPromptLog.shift();
+  }
+  function renderLiveStats(){
+    const el = $('liveStats');
+    if(el.style.display === 'none') return;
+    const s = views[0]?.sim;
+    if(!s) return;
+    $('lsPassed').textContent = s.stats.passed;
+    $('lsAvg').textContent = fmt(s.avgWait());
+    $('lsP95').textContent = fmt(s.p95Wait());
+    $('lsTph').textContent = Math.round(s.throughputPerHour());
+    $('lsColl').textContent = s.stats.collisions;
+    $('lsRed').textContent = s.stats.redViol;
+    const canvas = $('liveChart');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = canvas.clientWidth * dpr;
+    canvas.height = 180 * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const W = canvas.clientWidth, H = 180;
+    ctx.clearRect(0, 0, W, H);
+    const series = s.series;
+    if(series.length < 2) return;
+    const maxQ = Math.max(...series.map(r => r.queue), 1);
+    const maxW = Math.max(...series.map(r => r.wait), 1);
+    const padL = 36, padR = 8, padT = 8, padB = 16;
+    const plotW = W - padL - padR, plotH = H - padT - padB;
+    ctx.strokeStyle = 'rgba(255,255,255,.1)'; ctx.lineWidth = 1;
+    for(let i = 0; i <= 4; i++){
+      const y = padT + plotH * i / 4;
+      ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,.4)'; ctx.font = '10px ui-monospace,monospace'; ctx.textAlign = 'right';
+      ctx.fillText(Math.round(maxQ * (1 - i/4)), padL - 4, y + 3);
+    }
+    ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 1;
+    for(let i = 0; i <= 4; i++){
+      const x = padL + plotW * i / 4;
+      ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, padT + plotH); ctx.stroke();
+    }
+    function drawLine(data, key, color, max){
+      ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
+      for(let i = 0; i < data.length; i++){
+        const x = padL + plotW * (i / (data.length - 1));
+        const y = padT + plotH - plotH * (data[i][key] / max);
+        if(i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+    drawLine(series, 'queue', '#C6F36B', maxQ);
+    drawLine(series, 'wait', '#FFBD59', maxW);
+    ctx.fillStyle = '#C6F36B'; ctx.font = '11px ui-monospace,monospace'; ctx.textAlign = 'left';
+    ctx.fillText('queue', padL + 4, padT + 12);
+    ctx.fillStyle = '#FFBD59'; ctx.fillText('wait', padL + 4, padT + 26);
+  }
+  function setPaused(p){ paused = p; $('btnPause').textContent = p ? 'Resume' : 'Pause'; $('live').textContent = p ? 'Simulation paused' : 'Simulation running'; }
 function doReset(){ views.forEach(v => v.sim.reset()); setPaused(false); renderAll(); }
 function sendAmbulance(){
   let d = $('ambDir').value; if(d === 'R') d = DIRS[Math.floor(Math.random()*4)];
   views.forEach(v => v.sim.sendAmbulance(d));
 }
-$('btnPause').addEventListener('click', () => setPaused(!paused));
+$('btnStats').addEventListener('click', () => {
+    const el = $('liveStats');
+    const hidden = el.style.display === 'none';
+    el.style.display = hidden ? 'block' : 'none';
+    $('btnStats').textContent = hidden ? '📊 Hide stats' : '📊 Live stats';
+  });
+  $('btnPromptLog').addEventListener('click', () => {
+    $('promptLogModal').style.display = 'flex';
+    const content = $('promptLogContent');
+    content.innerHTML = aiPromptLog.map((e, i) =>
+      `<div style="padding:8px 0;border-bottom:1px solid rgba(255,255,255,.08)"><div style="color:var(--accent);font-weight:700">${i+1}. ${escapeHtml(e.prompt)}</div><div style="color:var(--muted);margin-top:4px;font-size:12px">${escapeHtml(e.response)}</div><div style="color:var(--faint);font-size:11px;margin-top:2px">t=${e.t}s · mode=${e.mode}</div></div>`
+    ).join('') || '<div style="color:var(--muted);padding:20px 0;text-align:center">No prompts yet. Run the simulation and watch the AI log fill up.</div>';
+  });
+  $('btnClosePromptLog').addEventListener('click', () => { $('promptLogModal').style.display = 'none'; });
+  $('btnTimeline').addEventListener('click', () => {
+    const el = $('liveStats');
+    const hidden = el.style.display === 'none';
+    el.style.display = hidden ? 'block' : 'none';
+    $('btnTimeline').textContent = hidden ? '📈 Show timeline' : '📈 Hide timeline';
+  });
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 $('btnReset').addEventListener('click', doReset);
 $('btnAmb').addEventListener('click', sendAmbulance);
 addEventListener('keydown', e => {
