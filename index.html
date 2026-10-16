@@ -1132,15 +1132,26 @@ function draw3d(v){
     V3.m = cam3d();
     f3d.length = 0;
     pushFace([{x: -500, y: 0, z: -500}, {x: 1260, y: 0, z: -500}, {x: 1260, y: 0, z: 1260}, {x: -500, y: 0, z: 1260}], bgColor, {x: 0, y: 1, z: 0});
-    groundRect(C - HALF, -300, C + HALF, W + 300, '#1a1d22', {x: 0, y: 1, z: 0});
-    groundRect(-300, C - HALF, W + 300, C + HALF, '#1a1d22', {x: 0, y: 1, z: 0});
-    groundRect(C - 2, -300, C + 2, W + 300, 'rgba(255,189,89,0.5)', {x: 0, y: 1, z: 0});
-    groundRect(-300, C - 2, W + 300, C + 2, 'rgba(255,189,89,0.5)', {x: 0, y: 1, z: 0});
+    // Wet asphalt road surfaces with subtle reflection
+    const roadColor = lightingMode === 'night' ? '#151920' : '#1a1d22';
+    const roadColor2 = lightingMode === 'night' ? '#12151b' : '#181a1f';
+    groundRect(C - HALF, -300, C + HALF, W + 300, roadColor, {x: 0, y: 1, z: 0});
+    groundRect(-300, C - HALF, W + 300, C + HALF, roadColor2, {x: 0, y: 1, z: 0});
+    // Yellow box junction
+    groundRect(C - 2, -300, C + 2, W + 300, 'rgba(255,189,89,0.55)', {x: 0, y: 1, z: 0});
+    groundRect(-300, C - 2, W + 300, C + 2, 'rgba(255,189,89,0.55)', {x: 0, y: 1, z: 0});
     groundRect(BOX_S, BOX_S, BOX_E, BOX_E, '#23272e', {x: 0, y: 1, z: 0});
+    // Lane markings with dashed pattern
     DIRS.forEach(d => {
       for(let lat = -HALF; lat < HALF; lat += 12) pushFace(laneQuad(d, STOP + 7, STOP + 23, lat, lat + 6), 'rgba(240,240,240,0.92)', {x: 0, y: 1, z: 0});
       pushFace(laneQuad(d, STOP - 1, STOP + 3, 0, HALF), '#ffffff', {x: 0, y: 1, z: 0});
     });
+    // Ambient occlusion shadow around the central blocks
+    const aoColor = lightingMode === 'night' ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.25)';
+    groundRect(C - HALF - 20, C - HALF - 20, C + HALF + 20, C - HALF - 4, aoColor, {x: 0, y: 1, z: 0});
+    groundRect(C - HALF - 20, C + HALF + 4, C + HALF + 20, C + HALF + 20, aoColor, {x: 0, y: 1, z: 0});
+    groundRect(C - HALF - 20, C - HALF - 4, C - HALF - 4, C + HALF + 20, aoColor, {x: 0, y: 1, z: 0});
+    groundRect(C + HALF + 4, C - HALF - 4, C + HALF + 20, C + HALF + 20, aoColor, {x: 0, y: 1, z: 0});
     const blocks = [
       [4, 4, C - HALF - 4, C - HALF - 4, '#243040'],
       [C + HALF + 4, 4, W - 4, C - HALF - 4, '#2c3a4a'],
@@ -1218,25 +1229,34 @@ function draw3d(v){
       ctx.fillStyle = grad;
       ctx.beginPath(); ctx.arc(pr.x, pr.y, r, 0, 7); ctx.fill();
     }
-    // Film grain overlay
-    if(reduceMotion.matches){
+    // Film grain overlay (applied when reduced-motion is NOT preferred)
+    if(!reduceMotion.matches){
       const grain = ctx.createImageData(W, W);
-      for(let i = 0; i < grain.data.length; i += 4){
-        const n = (Math.random() - 0.5) * 12;
-        grain.data[i] = 255 + n; grain.data[i+1] = 255 + n; grain.data[i+2] = 255 + n; grain.data[i+3] = 18;
+      const data = grain.data;
+      for(let i = 0; i < data.length; i += 4){
+        const n = (Math.random() - 0.5) * 14;
+        data[i] = 255 + n; data[i+1] = 255 + n; data[i+2] = 255 + n; data[i+3] = 16;
       }
       ctx.putImageData(grain, 0, 0);
     }
     // Vignette
     const vig = ctx.createRadialGradient(C, C, 100, C, C, W * 0.7);
     vig.addColorStop(0, 'rgba(0,0,0,0)');
-    vig.addColorStop(1, lightingMode === 'night' ? 'rgba(0,0,0,0.6)' : 'rgba(0,0,0,0.35)');
+    vig.addColorStop(1, lightingMode === 'night' ? 'rgba(0,0,0,0.65)' : 'rgba(0,0,0,0.4)');
     ctx.fillStyle = vig; ctx.fillRect(0, 0, W, W);
     // Color grading
     if(lightingMode === 'dusk'){
-      ctx.fillStyle = 'rgba(255,180,100,0.04)'; ctx.fillRect(0, 0, W, W);
+      ctx.fillStyle = 'rgba(255,160,80,0.05)'; ctx.fillRect(0, 0, W, W);
     } else if(lightingMode === 'night'){
-      ctx.fillStyle = 'rgba(40,80,160,0.08)'; ctx.fillRect(0, 0, W, W);
+      ctx.fillStyle = 'rgba(30,60,140,0.10)'; ctx.fillRect(0, 0, W, W);
+    }
+    // Chromatic aberration edge glow
+    if(lightingMode === 'night'){
+      const ab = ctx.createLinearGradient(0, 0, W, 0);
+      ab.addColorStop(0, 'rgba(255,60,120,0.04)');
+      ab.addColorStop(0.5, 'rgba(255,60,120,0)');
+      ab.addColorStop(1, 'rgba(80,160,255,0.04)');
+      ctx.fillStyle = ab; ctx.fillRect(0, 0, W, W);
     }
     if(showDecorations){
       const streetlights = [{x: 60, z: 60}, {x: W - 60, z: 60}, {x: 60, z: W - 60}, {x: W - 60, z: W - 60}];
