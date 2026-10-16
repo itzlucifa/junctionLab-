@@ -20,132 +20,152 @@
 <title>JunctionLab — four-way signalised junction simulator</title>
 <style>
   :root{
-    --bg:#0B0D10; --panel:#12161B; --panel2:#191F26; --line:#2A323B;
-    --text:#F3F5F7; --muted:#929DA9; --amber:#FFBD59; --green:#36D98A; --red:#FF6268; --blue:#75B8FF;
-    --accent:#C6F36B;
+    --bg:#0a0a0b; --panel:#0e0e108c; --panel2:#121214; --line:rgba(255,255,255,.09);
+    --text:#f4f4f2; --muted:rgba(244,244,242,.56); --faint:rgba(244,244,242,.4);
+    --amber:#FFBD59; --green:#36D98A; --red:#FF6268; --blue:#75B8FF;
+    --accent:#C6F36B; --accent2:#fafafa;
   }
   *{box-sizing:border-box}
-  html,body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,Manrope,system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.45;letter-spacing:-.01em;-webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100vh}
-  ::-webkit-scrollbar{width:5px;height:5px}
-  ::-webkit-scrollbar-track{background:#0b0d10}
-  ::-webkit-scrollbar-thumb{background:#191f26;border-radius:3px;border:1px solid #2A323B}
-  ::-webkit-scrollbar-thumb:hover{background:#2a323b}
-  ::selection{background:var(--accent);color:#0B0D10}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,system-ui,sans-serif;font-size:16px;line-height:1.6;letter-spacing:-.011em;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;overflow-x:hidden;min-height:100vh}
+  /* ambient noise + vignette backdrop for the frosted panels */
+  body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background-color:var(--bg);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");background-size:200px 200px;background-blend-mode:soft-light}
+  body:before{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),radial-gradient(60% 80% at 50% 0%,rgba(198,243,107,.06),transparent 70%),radial-gradient(95% 85% at 50% 35%,transparent 62%,rgba(10,10,11,.85) 100%);background-size:200px 200px,auto,auto}
+  a{color:inherit;text-decoration:none}
+  ::selection{background:var(--accent);color:#0a0a0b}
+  ::-webkit-scrollbar{width:6px;height:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px}
+  ::-webkit-scrollbar-thumb:hover{background:rgba(255,255,255,.14)}
   button,select,input{font:inherit;color:inherit}
-  header.top{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--line);background:var(--panel)}
-  .brand h1{margin:0;font-size:24px;letter-spacing:-.02em;font-weight:800}
-  .brand h1 small{font-weight:600;color:var(--accent);margin-left:10px;font-size:20px}
-  .brand p{margin:4px 0 0;color:var(--muted);font-size:13px}
-  .seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--panel2)}
-  .seg button{background:none;border:0;padding:9px 16px;cursor:pointer;color:var(--muted);font-weight:600;font-size:14px;transition:all .15s ease}
+  /* ---------- glass surface primitive ---------- */
+  .glass{background:rgba(14,14,16,.55);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(255,255,255,.11);box-shadow:0 1px #ffffff0d inset,0 8px 32px rgba(0,0,0,.4)}
+  .glass-light{background:rgba(255,255,255,.045);-webkit-backdrop-filter:blur(12px) saturate(140%);backdrop-filter:blur(12px) saturate(140%);border:1px solid rgba(255,255,255,.09);box-shadow:0 1px #ffffff0d inset}
+  .glass-accent{background:rgba(198,243,107,.1);-webkit-backdrop-filter:blur(14px) saturate(150%);backdrop-filter:blur(14px) saturate(150%);border:1px solid rgba(198,243,107,.28);box-shadow:0 0 24px rgba(198,243,107,.18) inset,0 8px 32px rgba(0,0,0,.4)}
+  header.top{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;justify-content:space-between;padding:14px 20px;position:sticky;top:0;z-index:50}
+  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;letter-spacing:-.02em}
+  .brand-mark{width:22px;height:22px;flex:none}
+  .brand h1{margin:0;font-size:1.05rem;font-weight:560;letter-spacing:-.02em}
+  .brand h1 small{font-weight:500;color:var(--accent);margin-left:8px;font-size:.9rem}
+  .brand p{margin:2px 0 0;color:var(--muted);font-size:.78rem;letter-spacing:.02em}
+  .seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+  .seg button{background:transparent;border:0;padding:8px 13px;cursor:pointer;color:var(--muted);font-size:.82rem;font-weight:500;transition:background .15s ease,color .15s ease}
   .seg button+button{border-left:1px solid var(--line)}
-  .seg button[aria-pressed="true"]{background:var(--accent);color:#0B0D10}
-  .seg button:hover:not([aria-pressed="true"]){background:var(--panel)}
-  .btn{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 16px;cursor:pointer;font-weight:700;font-size:14px;transition:all .15s ease}
-  .btn:hover{border-color:var(--accent);color:var(--accent)}
-  .btn.primary{background:var(--accent);color:#0B0D10;border-color:var(--accent);box-shadow:0 0 12px rgba(198,243,107,.4)}
-  .btn.primary:hover{filter:brightness(1.05);transform:translateY(-1px)}
-  .btn.danger{background:#261618;border-color:#532121;color:#FFA4A4}
-  .btn.danger:hover{border-color:var(--red);color:var(--red)}
-  .seg button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;padding:20px 24px 20px;width:100%}
-  @media (max-width:1000px){main{grid-template-columns:1fr;padding:12px 16px}}
-  aside{margin-left:8px}
-  .simbox{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin:0 auto;max-width:980px}
-  .simbox figcaption{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:10px}
-  .simbox figcaption strong{font-size:15px;font-weight:700}
-  .chip{display:inline-block;padding:2px 9px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);font-size:12px;color:var(--muted)}
-  canvas{display:block;width:100%;height:auto;aspect-ratio:1/1;border-radius:8px;background:#12181f}
-  .status{margin:8px 2px 2px;display:flex;gap:8px;flex-wrap:wrap}
-  .pill{font-weight:700;font-size:13px;padding:3px 10px;border-radius:8px;border:2px solid currentColor;display:inline-flex;gap:6px;align-items:center}
-  .pill.G{color:var(--green)} .pill.Y{color:var(--amber)} .pill.R{color:var(--red)}
-  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
-  @media (max-width:560px){.tiles{grid-template-columns:repeat(2,1fr)}}
-  .tile{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px}
-  .tile .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-  .tile .v{font-size:21px;font-weight:700;font-variant-numeric:tabular-nums}
-  .tile .v small{font-size:12px;font-weight:500;color:var(--muted)}
-  .queues{margin-top:10px;display:grid;gap:6px}
-  .q{display:grid;grid-template-columns:70px 1fr 74px;gap:8px;align-items:center;font-size:13px}
-  .q .bar{height:12px;background:#0f151b;border:1px solid var(--line);border-radius:6px;overflow:hidden}
-  .q .bar i{display:block;height:100%;background:repeating-linear-gradient(135deg,var(--blue) 0 6px,#4a8fd0 6px 12px);width:0}
-  .q b{font-variant-numeric:tabular-nums;text-align:right}
-  aside .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:18px}
-  aside h2{font-size:12px;margin:0 0 10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:700}
-  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-  .chips button{background:var(--panel2);border:1px solid var(--line);border-radius:99px;padding:6px 12px;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s ease}
-  .chips button:hover{border-color:var(--accent);color:var(--accent)}
-  .chips button[aria-pressed="true"]{background:var(--accent);color:#0B0D10;border-color:var(--accent)}
-  .row{display:grid;grid-template-columns:62px 1fr 38px;gap:8px;align-items:center;margin:7px 0;font-size:14px}
-  .row output{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
-  input[type=range]{width:100%;accent-color:var(--accent)}
-  .fx{display:grid;grid-template-columns:74px 66px 1fr;gap:8px;align-items:baseline;font-size:12.5px;margin:7px 0}
+  .seg button[aria-pressed="true"]{background:rgba(198,243,107,.12);color:var(--accent)}
+  .seg button:hover:not([aria-pressed="true"]){background:rgba(255,255,255,.04)}
+  .ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;padding:9px 16px;cursor:pointer;font-weight:550;font-size:.86rem;color:var(--text);transition:background .15s ease,border-color .15s ease,transform .12s ease,box-shadow .15s ease}
+  .btn:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.18)}
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--accent2);color:#0a0a0b;border-color:var(--accent2);font-weight:600;box-shadow:0 0 20px rgba(198,243,107,.3)}
+  .btn.primary:hover{background:#fff;box-shadow:0 0 28px rgba(198,243,107,.5);transform:translateY(-1px)}
+  .btn.danger{background:rgba(255,98,104,.08);border-color:rgba(255,98,104,.2);color:#FFA4A4}
+  .btn.danger:hover{background:rgba(255,98,104,.16);border-color:var(--red);color:var(--red)}
+  .seg button:focus-visible,.btn:focus-visible,input:focus-visible,select:focus-visible,canvas:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;padding:24px;width:100%;max-width:1400px;margin:0 auto}
+  @media (max-width:1100px){main{grid-template-columns:1fr}}
+  aside{margin-left:0}
+  .simbox{background:rgba(14,14,16,.6);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(255,255,255,.11);border-radius:14px;padding:16px;margin:0 auto;max-width:980px;box-shadow:0 1px #ffffff0d inset,0 8px 32px rgba(0,0,0,.4)}
+  .simbox figcaption{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:12px}
+  .simbox figcaption strong{font-size:14px;font-weight:560;letter-spacing:-.01em}
+  .chip{display:inline-block;padding:3px 10px;border-radius:99px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);font-size:11.5px;color:var(--muted);font-family:ui-monospace,monospace;letter-spacing:.04em}
+  canvas{display:block;width:100%;height:auto;aspect-ratio:1/1;border-radius:10px;background:#060607;border:1px solid rgba(255,255,255,.06)}
+  .status{margin:10px 2px 2px;display:flex;gap:8px;flex-wrap:wrap}
+  .pill{font-weight:600;font-size:12px;padding:4px 11px;border-radius:99px;border:1px solid currentColor;display:inline-flex;gap:6px;align-items:center;letter-spacing:.02em}
+  .pill.G{color:var(--green);border-color:rgba(54,217,138,.4);background:rgba(54,217,138,.1)}
+  .pill.Y{color:var(--amber);border-color:rgba(255,189,89,.4);background:rgba(255,189,89,.1)}
+  .pill.R{color:var(--red);border-color:rgba(255,98,104,.4);background:rgba(255,98,104,.1)}
+  .tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
+  @media (max-width:760px){.tiles{grid-template-columns:repeat(2,1fr)}}
+  .tile{background:rgba(255,255,255,.04);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease}
+  .tile:hover{transform:translateY(-2px);border-color:rgba(255,255,255,.16);box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  .tile .k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-weight:500}
+  .tile .v{font-size:22px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+  .tile .v small{font-size:12px;font-weight:400;color:var(--muted)}
+  .queues{margin-top:12px;display:grid;gap:8px}
+  .q{display:grid;grid-template-columns:68px 1fr 70px;gap:10px;align-items:center;font-size:13px;color:var(--muted)}
+  .q b{font-variant-numeric:tabular-nums;text-align:right;color:var(--text);font-weight:500}
+  .q .bar{height:10px;background:rgba(0,0,0,.25);border:1px solid rgba(255,255,255,.06);border-radius:6px;overflow:hidden}
+  .q .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),#4a8fd0);width:0}
+  aside .panel{background:rgba(14,14,16,.55);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(255,255,255,.11);border-radius:14px;padding:18px;margin-bottom:18px;box-shadow:0 1px #ffffff0d inset,0 8px 32px rgba(0,0,0,.4)}
+  aside h2{font-size:11px;margin:0 0 12px;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);font-weight:600;font-family:ui-monospace,Menlo,monospace}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .chips button{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:6px 13px;cursor:pointer;font-size:12.5px;font-weight:500;color:var(--muted);transition:all .15s ease}
+  .chips button:hover{border-color:rgba(198,243,107,.4);color:var(--accent)}
+  .chips button[aria-pressed="true"]{background:rgba(198,243,107,.12);color:var(--accent);border-color:rgba(198,243,107,.3)}
+  .row{display:grid;grid-template-columns:62px 1fr 44px;gap:10px;align-items:center;margin:8px 0;font-size:14px}
+  .row label{color:var(--text);font-weight:500}
+  .row output{text-align:right;font-variant-numeric:tabular-nums;font-weight:600;color:var(--text)}
+  input[type=range]{width:100%;accent-color:var(--accent);height:4px}
+  .fx{display:grid;grid-template-columns:74px 66px 1fr;gap:8px;align-items:baseline;font-size:12.5px;margin:8px 0}
   .fx b{color:var(--text)}
-  .fx span{font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+  .fx span{font-weight:600;color:var(--accent);font-variant-numeric:tabular-nums}
   .fx i{color:var(--muted);font-style:normal;font-size:11.5px;line-height:1.35}
-  .note{font-size:12.5px;color:var(--muted);margin:8px 0 0}
-  main section{display:grid;gap:16px;align-content:start}
-  .panel.wide{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+  .note{font-size:12.5px;color:var(--muted);margin:10px 0 0;line-height:1.5}
+  main section{display:grid;gap:18px;align-content:start}
+  .panel.wide{background:rgba(14,14,16,.55);-webkit-backdrop-filter:blur(18px) saturate(140%);backdrop-filter:blur(18px) saturate(140%);border:1px solid rgba(255,255,255,.11);border-radius:14px;padding:18px;box-shadow:0 1px #ffffff0d inset,0 8px 32px rgba(0,0,0,.4)}
   .chartbox canvas{aspect-ratio:2.4/1}
-  .judge{display:grid;gap:6px;margin-top:12px}
-  .jrow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:13.5px}
-  .jrow .res{font-weight:800;letter-spacing:.4px}
-  .jrow.pass .res{color:#0f2c1c;background:var(--green);padding:2px 9px;border-radius:7px}
-  .jrow.fail .res{color:#2b0b0e;background:#ff8f8f;padding:2px 9px;border-radius:7px}
-  .jrow small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
-  .grade{font-weight:800;padding:1px 8px;border-radius:7px;font-size:18px}
-  select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px}
-  .verdict{background:#11261B;border:1px solid #2c6a49;border-radius:10px;padding:12px 14px;margin-bottom:14px;display:none}
+  .judge{display:grid;gap:8px;margin-top:14px}
+  .jrow{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:10px 14px;font-size:13.5px;transition:background .15s ease,border-color .15s ease}
+  .jrow:hover{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.14)}
+  .jrow .res{font-weight:700;letter-spacing:.4px;font-size:12px;padding:3px 11px;border-radius:6px}
+  .jrow.pass .res{color:#0a2a18;background:var(--green)}
+  .jrow.fail .res{color:#2a0a0a;background:var(--red)}
+  .jrow small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+  select{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:10px 12px;color:var(--text);font-size:14px}
+  .verdict{background:rgba(17,38,27,.6);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border:1px solid rgba(54,217,138,.3);border-radius:12px;padding:14px 16px;margin-bottom:18px;display:none}
   .verdict.show{display:block}
-  .verdict.bad{background:#2a1d12;border-color:#7a5320}
-  .verdict b{font-size:16px}
-  .check{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px}
-  .kbd{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:0 6px;font-size:12px}
-  footer{margin:0 auto;padding:6px 24px 26px;color:var(--muted);font-size:13px}
+  .verdict.bad{background:rgba(42,29,18,.6);border-color:rgba(255,189,89,.3)}
+  .verdict b{font-size:15px;font-weight:600}
+  .check{display:flex;gap:8px;align-items:center;margin-top:12px;font-size:14px;color:var(--muted)}
+  .check input{accent-color:var(--accent)}
+  .kbd{font-family:ui-monospace,Menlo,Consolas,monospace;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:1px 6px;font-size:12px;color:var(--text)}
+  footer{max-width:1400px;margin:0 auto;padding:24px 24px 40px;color:var(--muted);font-size:12.5px;text-align:center}
   .sr{position:absolute;left:-9999px}
 </style>
 </head>
-<body class="antialiased">
-<header class="top">
-  <div class="brand">
-    <h1>JunctionLab<small>चौक</small></h1>
-    <p>Four-way signalised junction · left-hand traffic · Indian vehicle mix</p>
-  </div>
-  <div class="seg" role="group" aria-label="Signal control mode">
-    <button type="button" data-mode="fixed" aria-pressed="true">Fixed (manual)</button>
-    <button type="button" data-mode="calculated" aria-pressed="false">Fixed (calculated)</button>
-    <button type="button" data-mode="adaptive" aria-pressed="false">Adaptive</button>
-    <button type="button" data-mode="compare" aria-pressed="false">Compare all three</button>
-  </div>
-  <div class="seg" role="group" aria-label="View">
-    <button type="button" data-view="2d" aria-pressed="true">2D · top-down</button>
-    <button type="button" data-view="3d" aria-pressed="false">3D · perspective</button>
-  </div>
-  <div class="ctrls">
-    <button class="btn primary" id="btnPause" type="button">Pause</button>
-    <button class="btn danger" id="btnReset" type="button">Reset</button>
-    <div class="seg" role="group" aria-label="Simulation speed" id="speedSeg">
-      <button type="button" data-speed="1" aria-pressed="true">1×</button>
-      <button type="button" data-speed="2" aria-pressed="false">2×</button>
-      <button type="button" data-speed="4" aria-pressed="false">4×</button>
-      <button type="button" data-speed="8" aria-pressed="false">8×</button>
+<body>
+  <header class="top">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="3" width="26" height="26" rx="7" fill="none" stroke="#C6F36B" stroke-width="1.5"/><path d="M16 6v20M6 16h20" stroke="#C6F36B" stroke-width="1.5" stroke-linecap="round"/><circle cx="16" cy="11" r="2.2" fill="#FF6268"/><circle cx="16" cy="16" r="2.2" fill="#FFBD59"/><circle cx="16" cy="21" r="2.2" fill="#36D98A"/></svg>
+      <h1>JunctionLab<small>चौक</small></h1>
+      <p>Four-way signalised junction · left-hand traffic · Indian vehicle mix</p>
     </div>
-  </div>
-</header>
+    <div class="seg glass" role="group" aria-label="Signal control mode">
+      <button type="button" data-mode="fixed" aria-pressed="true">Fixed (manual)</button>
+      <button type="button" data-mode="calculated" aria-pressed="false">Fixed (calculated)</button>
+      <button type="button" data-mode="adaptive" aria-pressed="false">Adaptive</button>
+      <button type="button" data-mode="compare" aria-pressed="false">Compare all three</button>
+    </div>
+    <div class="seg glass" role="group" aria-label="View">
+      <button type="button" data-view="2d" aria-pressed="true">2D · top-down</button>
+      <button type="button" data-view="3d" aria-pressed="false">3D · perspective</button>
+    </div>
+    <div class="ctrls glass" style="padding:6px 8px;gap:6px">
+      <button class="btn primary" id="btnPause" type="button">Pause</button>
+      <button class="btn danger" id="btnReset" type="button">Reset</button>
+      <div class="seg" role="group" aria-label="Simulation speed" id="speedSeg" style="border:none">
+        <button type="button" data-speed="1" aria-pressed="true">1×</button>
+        <button type="button" data-speed="2" aria-pressed="false">2×</button>
+        <button type="button" data-speed="4" aria-pressed="false">4×</button>
+        <button type="button" data-speed="8" aria-pressed="false">8×</button>
+      </div>
+    </div>
+  </header>
 
 <main>
-  <section>
-    <div class="verdict" id="verdict" aria-live="polite"></div>
+  <section style="display:grid;gap:18px;align-content:start;min-width:0">
+    <div class="verdict glass" id="verdict" aria-live="polite"></div>
     <div class="stage" id="stage"></div>
 
-    <figure class="simbox chartbox">
+    <figure class="simbox chartbox glass">
       <figcaption><strong>Queue and wait over time</strong><span class="chip" id="chartKey"></span></figcaption>
       <canvas id="chart" role="img" aria-label="Time series of total queue length and average wait for each control strategy"></canvas>
     </figure>
 
     <div class="panel wide">
-      <h2>Judge tests</h2>
-      <div class="ctrls">
+      <h2 style="font-size:11px;margin:0 0 14px;text-transform:uppercase;letter-spacing:.12em;color:var(--faint);font-weight:600;font-family:ui-monospace,monospace">Judge tests</h2>
+      <div class="ctrls" style="flex-wrap:wrap">
         <button class="btn" type="button" data-test="stress">1 · Stress, no overlaps</button>
         <button class="btn" type="button" data-test="amber">2 · Amber boundary</button>
         <button class="btn" type="button" data-test="ambulance">3 · Ambulance, every arm</button>
@@ -158,7 +178,7 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;padding:20p
     </div>
   </section>
 
-  <aside>
+  <aside style="position:sticky;top:90px;align-self:start">
     <div class="panel">
       <h2>Traffic demand · vehicles per minute</h2>
       <div class="chips" id="presets">
@@ -201,11 +221,11 @@ main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;padding:20p
 
     <div class="panel">
       <h2>Emergency vehicle</h2>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-        <select id="ambDir" aria-label="Ambulance direction" style="background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:9px 12px;color:var(--text)">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+        <select id="ambDir" aria-label="Ambulance direction" style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:9px;padding:10px 12px;color:var(--text);font-size:14px;flex:1;min-width:140px">
           <option value="R">Random arm</option><option value="N">From North</option><option value="E">From East</option><option value="S">From South</option><option value="W">From West</option>
         </select>
-        <button class="btn" id="btnAmb" type="button">Send ambulance (108)</button>
+        <button class="btn" id="btnAmb" type="button" style="flex:1">Send ambulance (108)</button>
       </div>
       <label class="check"><input type="checkbox" id="corridor" checked> Green corridor for emergency vehicles</label>
       <p class="note">With the corridor on, signals clear the ambulance's arm and queued vehicles make way. Switch it off to see the delay it normally causes.</p>
@@ -760,7 +780,7 @@ const bg = document.createElement('canvas');
 bg.width = bg.height = W*K;
 (function paintBackground(){
   const g = bg.getContext('2d'); g.setTransform(K,0,0,K,0,0);
-  g.fillStyle = '#121a21'; g.fillRect(0,0,W,W);
+  g.fillStyle = '#060607'; g.fillRect(0,0,W,W);
   // corner blocks with sidewalks, buildings and trees
   const blocks = [[0,0],[C+HALF,0],[0,C+HALF],[C+HALF,C+HALF]];
   const bcols = ['#2b3641','#33404c','#3a3a46','#2f3d3a','#413a36','#2a3340'];
@@ -980,7 +1000,7 @@ function draw3d(v){
   ctx.fillStyle = '#0a0e13'; ctx.fillRect(0, 0, W, W);
   V3.m = cam3d();
   f3d.length = 0;
-  pushFace([{x: -400, y: 0, z: -400}, {x: 1160, y: 0, z: -400}, {x: 1160, y: 0, z: 1160}, {x: -400, y: 0, z: 1160}], '#12181f');
+  pushFace([{x: -400, y: 0, z: -400}, {x: 1160, y: 0, z: -400}, {x: 1160, y: 0, z: 1160}, {x: -400, y: 0, z: 1160}], '#060607');
   groundRect(C - HALF, -260, C + HALF, W + 260, '#2a2f36');
   groundRect(-260, C - HALF, W + 260, C + HALF, '#2a2f36');
   groundRect(C - 2, -260, C + 2, W + 260, 'rgba(242, 194, 48, 0.55)');
