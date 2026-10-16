@@ -1,11 +1,18 @@
-﻿# Created by **Sumit Nawale** & **Nayan Dudkekar**
+﻿# JunctionLab — Smart Traffic Signal Simulator 🚦
 
 ![JunctionLab UI Preview](preview.png)
 
-> **JunctionLab** — A modern, interactive traffic signal simulation built for research, learning, and experimentation.
-# JunctionLab · चौक
+> *Created by **Sumit Nawale** & **Nayan Dudkekar***
 
-A four-way signalised junction you can watch, break and argue with — fixed-time, Webster-calculated and
+[![Live Demo](https://img.shields.io/badge/🚀%20Live%20Demo-Visit%20Now-brightgreen?style=for-the-badge)](https://junctionlab.netlify.app/)
+[![CI](https://github.com/itzlucifa/junctionLab-/actions/workflows/ci.yml/badge.svg)](https://github.com/itzlucifa/junctionLab-/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![No dependencies](https://img.shields.io/badge/dependencies-0-green)](package.json)
+
+---![JunctionLab UI Preview](preview.png)
+
+> **JunctionLab** — A modern, interactive traffic signal simulation built for research, learning, and experimentation.
+## About`r`n`r`nA four-way signalised junction you can watch, break and argue with — fixed-time, Webster-calculated and
 adaptive signal control competing for the same vehicles, in **one dependency-free HTML file**.
 
 [![CI](https://github.com/itzlucifa/junctionLab-/actions/workflows/ci.yml/badge.svg)](https://github.com/itzlucifa/junctionLab-/actions/workflows/ci.yml)
@@ -13,8 +20,8 @@ adaptive signal control competing for the same vehicles, in **one dependency-fre
 [![Live demo](https://img.shields.io/badge/demo-GitHub%20Pages-blue)](https://junctionlab.netlify.app/)
 [![No dependencies](https://img.shields.io/badge/dependencies-0-green)](package.json)
 
-**[Open the live demo →](https://junctionlab.netlify.app/)**
-No install, no account, no network calls. It runs entirely in your browser tab.
+
+No install • No dependencies • No network calls • Runs entirely in your browser
 
 ---
 
