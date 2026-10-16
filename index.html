@@ -40,10 +40,9 @@ header.top{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:center;justify-
 .btn:hover{border-color:#41505f}
 .btn.primary{background:var(--amber);color:#1a1405;border-color:var(--amber)}
 .btn.danger{background:#3a1d22;border-color:#6a2c35;color:#ffd5d8}
-main{display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:18px;padding:18px 22px 10px;max-width:1500px;margin:0 auto}
-@media (max-width:1000px){main{grid-template-columns:1fr}}
-.stage{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));align-content:start}
-.simbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin:0}
+main{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;padding:16px 24px 10px;width:100%}
+@media (max-width:1000px){main{grid-template-columns:1fr;padding:12px 16px}}
+.simbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin:0 auto;max-width:760px}
 .simbox figcaption{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:baseline;margin-bottom:8px}
 .simbox figcaption strong{font-size:16px}
 .chip{display:inline-block;padding:2px 9px;border-radius:99px;background:var(--panel2);border:1px solid var(--line);font-size:12.5px;color:var(--muted)}
@@ -93,7 +92,7 @@ select{background:var(--panel2);border:1px solid var(--line);border-radius:8px;p
 .verdict b{font-size:16px}
 .check{display:flex;gap:8px;align-items:center;margin-top:10px;font-size:14px}
 .kbd{font-family:ui-monospace,Menlo,Consolas,monospace;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:0 6px;font-size:12px}
-footer{max-width:1500px;margin:0 auto;padding:6px 22px 26px;color:var(--muted);font-size:13px}
+footer{margin:0 auto;padding:6px 22px 26px;color:var(--muted);font-size:13px}
 .sr{position:absolute;left:-9999px}
 </style>
 </head>
@@ -108,6 +107,10 @@ footer{max-width:1500px;margin:0 auto;padding:6px 22px 26px;color:var(--muted);f
     <button type="button" data-mode="calculated" aria-pressed="false">Fixed (calculated)</button>
     <button type="button" data-mode="adaptive" aria-pressed="false">Adaptive</button>
     <button type="button" data-mode="compare" aria-pressed="false">Compare all three</button>
+  </div>
+  <div class="seg" role="group" aria-label="View">
+    <button type="button" data-view="2d" aria-pressed="true">2D · top-down</button>
+    <button type="button" data-view="3d" aria-pressed="false">3D · perspective</button>
   </div>
   <div class="ctrls">
     <button class="btn primary" id="btnPause" type="button">Pause</button>
@@ -730,7 +733,7 @@ const cfg = {rates:Object.assign({}, DEFAULT_CFG.rates), green:DEFAULT_CFG.green
 const SEED = 20261016;
 const DPR = Math.min(2, window.devicePixelRatio || 1);
 const K = DPR;
-let mode = 'fixed', speed = 1, paused = false, views = [];
+let mode = 'fixed', speed = 1, paused = false, view = '2d', views = [];
 
 function rr(ctx, x, y, w, h, r){
   r = Math.min(r, w/2, h/2);
@@ -860,7 +863,7 @@ function drawSignal(ctx, d, lamp){
   ctx.fillStyle = lc; ctx.fillText(label, q.x, q.y+1);
 }
 
-function draw(v){
+function draw2d(v){
   const ctx = v.ctx, sim = v.sim;
   ctx.setTransform(K,0,0,K,0,0);
   ctx.drawImage(bg, 0, 0, W, W);
@@ -882,6 +885,135 @@ function draw(v){
     ctx.font = '800 15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     const tw = ctx.measureText(txt).width + 24;
     ctx.fillStyle = 'rgba(8,11,14,.9)'; rr(ctx,C-tw/2,34,tw,28,9); ctx.fill();
+    ctx.strokeStyle = cfg.corridor ? '#3ddc84' : '#ffbf3c'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#ffffff'; ctx.fillText(txt, C, 49);
+  }
+}
+
+/* ---------- 3D perspective view (software renderer, no WebGL, no CDN) ---------- */
+const V3 = {fov: 960, near: 1.5, eye: {x: C + 720, y: 700, z: C + 720}, cx: C, cy: C, blockH: 190};
+const CAR_H = {bike: 13, car: 19, auto: 21, bus: 29, amb: 23};
+function cam3d(){
+  const e = V3.eye;
+  let fx = V3.cx - e.x, fy = 0 - e.y, fz = V3.cy - e.z, n = Math.sqrt(fx * fx + fy * fy + fz * fz);
+  fx /= n; fy /= n; fz /= n;
+  let rx = -fz, ry = 0, rz = fx, rn = Math.sqrt(rx * rx + rz * rz); rx /= rn; rz /= rn;
+  let ux = -rz * fy, uy = rz * fx + fz * fz, uz = -fz * fy, un = Math.sqrt(ux * ux + uy * uy + uz * uz);
+  ux /= un; uy /= un; uz /= un;
+  return {ex: e.x, ey: e.y, ez: e.z, fx, fy, fz, rx, ry, rz, ux, uy, uz};
+}
+function project3d(p){
+  const m = V3.m;
+  const dx = p.x - m.ex, dy = p.y - m.ey, dz = p.z - m.ez;
+  const x = dx * m.rx + dy * m.ry + dz * m.rz;
+  const y = dx * m.ux + dy * m.uy + dz * m.uz;
+  const z = dx * m.fx + dy * m.fy + dz * m.fz;
+  if(z < V3.near) return null;
+  const k = V3.fov / z;
+  return {x: V3.cx + x * k, y: V3.cy - y * k, z};
+}
+const f3d = [];
+function pushFace(pts, color){
+  const pp = pts.map(project3d);
+  if(pp.some(p => !p)) return;
+  let z = 0; for(const p of pp) z += p.z; z /= 4;
+  f3d.push({pts: pp, color, z});
+}
+function shade(col, f){
+  const mt = col.match(/#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i);
+  if(!mt) return col;
+  const g = (i) => Math.round(clamp(parseInt(mt[i], 16) * f, 0, 255));
+  return 'rgb(' + g(1) + ',' + g(2) + ',' + g(3) + ')';
+}
+function poly(ctx, pts){
+  ctx.beginPath(); ctx.moveTo(pts[0].x, pts[0].y);
+  for(let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.closePath();
+}
+function worldPt(dir, s, o, h){ const p = pos(dir, s, o); return {x: p.x, y: h, z: p.y}; }
+function groundRect(x1, z1, x2, z2, color){
+  pushFace([{x: x1, y: 0, z: z1}, {x: x2, y: 0, z: z1}, {x: x2, y: 0, z: z2}, {x: x1, y: 0, z: z2}], color);
+}
+function laneQuad(dir, s1, s2, o1, o2){
+  const a = pos(dir, s1, o1), b = pos(dir, s1, o2), c = pos(dir, s2, o2), d = pos(dir, s2, o1);
+  return [{x: a.x, y: 0, z: a.y}, {x: b.x, y: 0, z: b.y}, {x: c.x, y: 0, z: c.y}, {x: d.x, y: 0, z: d.y}];
+}
+function addCar(c){
+  const dir = c.dir, len = c.len, wid = c.wid, h = CAR_H[c.type] || 19;
+  const col = c.col || '#ffffff';
+  const sf = c.s, sb = c.s - len, ll = c.off - wid / 2, lr = c.off + wid / 2;
+  const B00 = worldPt(dir, sb, ll, 0), B10 = worldPt(dir, sb, lr, 0);
+  const B01 = worldPt(dir, sf, ll, 0), B11 = worldPt(dir, sf, lr, 0);
+  const T00 = worldPt(dir, sb, ll, h), T10 = worldPt(dir, sb, lr, h);
+  const T01 = worldPt(dir, sf, ll, h), T11 = worldPt(dir, sf, lr, h);
+  pushFace([T01, T11, T10, T00], col);
+  pushFace([B01, B11, T11, T01], shade(col, 0.8));
+  pushFace([B00, B10, T10, T00], shade(col, 0.6));
+  pushFace([B00, B01, T01, T00], shade(col, 0.65));
+  pushFace([B11, B10, T10, T11], shade(col, 0.65));
+}
+function addSignal(ctx, dir, lamp){
+  const p = pos(dir, STOP - 6, HALF + 16), px = p.x, pz = p.y;
+  pushFace([{x: px - 3, y: 0, z: pz - 1}, {x: px + 3, y: 0, z: pz + 1}, {x: px + 3, y: 150, z: pz + 1}, {x: px - 3, y: 150, z: pz - 1}], '#1c242c');
+  const lamps = [['R', 112, '#ff4d4d'], ['Y', 142, '#ffbf3c'], ['G', 172, '#3ddc84']];
+  for(const [k, y, col] of lamps){
+    const pr = project3d({x: px, y, z: pz});
+    if(!pr) continue;
+    const r = 5.5 * V3.fov / pr.z * K;
+    ctx.beginPath(); ctx.arc(pr.x, pr.y, r, 0, 7);
+    ctx.fillStyle = lamp === k ? col : '#1c242c'; ctx.fill();
+    ctx.strokeStyle = '#4a5764'; ctx.lineWidth = 1 / K; ctx.stroke();
+  }
+}
+function draw3d(v){
+  const ctx = v.ctx, sim = v.sim;
+  ctx.setTransform(K, 0, 0, K, 0, 0);
+  ctx.fillStyle = '#0a0e13'; ctx.fillRect(0, 0, W, W);
+  V3.m = cam3d();
+  f3d.length = 0;
+  pushFace([{x: -400, y: 0, z: -400}, {x: 1160, y: 0, z: -400}, {x: 1160, y: 0, z: 1160}, {x: -400, y: 0, z: 1160}], '#12181f');
+  groundRect(C - HALF, -260, C + HALF, W + 260, '#2a2f36');
+  groundRect(-260, C - HALF, W + 260, C + HALF, '#2a2f36');
+  groundRect(C - 2, -260, C + 2, W + 260, 'rgba(242, 194, 48, 0.55)');
+  groundRect(-260, C - 2, W + 260, C + 2, 'rgba(242, 194, 48, 0.55)');
+  groundRect(BOX_S, BOX_S, BOX_E, BOX_E, '#30363f');
+  DIRS.forEach(d => {
+    for(let lat = -HALF; lat < HALF; lat += 12) pushFace(laneQuad(d, STOP + 7, STOP + 23, lat, lat + 6), 'rgba(240, 240, 240, 0.9)');
+    pushFace(laneQuad(d, STOP - 1, STOP + 3, 0, HALF), '#ffffff');
+  });
+  const blocks = [
+    [4, 4, C - HALF - 4, C - HALF - 4, '#1b242d'],
+    [C + HALF + 4, 4, W - 4, C - HALF - 4, '#33404c'],
+    [4, C + HALF + 4, C - HALF - 4, W - 4, '#3a3a46'],
+    [C + HALF + 4, C + HALF + 4, W - 4, W - 4, '#2a3340']
+  ];
+  blocks.forEach(([x1, z1, x2, z2, col]) => {
+    const h = V3.blockH;
+    pushFace([{x: x1, y: h, z: z1}, {x: x2, y: h, z: z1}, {x: x2, y: h, z: z2}, {x: x1, y: h, z: z2}], col);
+    pushFace([{x: x1, y: 0, z: z1}, {x: x1, y: 0, z: z2}, {x: x1, y: h, z: z2}, {x: x1, y: h, z: z1}], shade(col, 0.7));
+    pushFace([{x: x2, y: 0, z: z1}, {x: x2, y: h, z: z1}, {x: x2, y: h, z: z2}, {x: x2, y: 0, z: z2}], shade(col, 0.7));
+    pushFace([{x: x1, y: 0, z: z1}, {x: x2, y: 0, z: z1}, {x: x2, y: h, z: z1}, {x: x1, y: h, z: z1}], shade(col, 0.7));
+    pushFace([{x: x1, y: 0, z: z2}, {x: x2, y: h, z: z2}, {x: x2, y: 0, z: z2}, {x: x1, y: 0, z: z2}], shade(col, 0.7));
+  });
+  for(const d of DIRS){ const lane = sim.cars[d]; for(let i = lane.length - 1; i >= 0; i--) addCar(lane[i]); }
+  for(const d of DIRS) for(const a of sim.amb[d]) addCar(a);
+  DIRS.forEach(d => addSignal(ctx, d, sim.lamp(AXIS[d])));
+  if(sim.ambDir && cfg.corridor){
+    const pulse = reduceMotion.matches ? 0.22 : 0.18 + 0.10 * Math.sin(sim.t * 6);
+    const q = laneQuad(sim.ambDir, 0, W, 0, HALF).map(project3d);
+    if(q.every(p => p)){ ctx.fillStyle = 'rgba(61, 220, 132,' + pulse * 0.5 + ')'; poly(ctx, q); ctx.fill(); }
+  }
+  f3d.sort((a, b) => b.z - a.z);
+  for(const f of f3d){
+    ctx.fillStyle = f.color; poly(ctx, f.pts); ctx.fill();
+    ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)'; ctx.lineWidth = 1 / K; poly(ctx, f.pts); ctx.stroke();
+  }
+  if(sim.ambDir){
+    const txt = cfg.corridor ? 'AMBULANCE 108 · GREEN CORRIDOR · ' + NAMES[sim.ambDir].toUpperCase()
+                             : 'AMBULANCE 108 · NO CORRIDOR · ' + NAMES[sim.ambDir].toUpperCase();
+    ctx.font = '800 15px system-ui,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const tw = ctx.measureText(txt).width + 24;
+    ctx.fillStyle = 'rgba(8, 11, 14, 0.9)'; rr(ctx, C - tw / 2, 34, tw, 28, 9); ctx.fill();
     ctx.strokeStyle = cfg.corridor ? '#3ddc84' : '#ffbf3c'; ctx.lineWidth = 2; ctx.stroke();
     ctx.fillStyle = '#ffffff'; ctx.fillText(txt, C, 49);
   }
@@ -1119,6 +1251,11 @@ document.querySelector('[aria-label="Signal control mode"]').addEventListener('c
 });
 $('speedSeg').addEventListener('click', e => { const b = e.target.closest('button'); if(!b) return; speed = +b.dataset.speed; pressed(b.parentNode, b); });
 
+document.querySelector('[aria-label="View"]').addEventListener('click', e => {
+  const b = e.target.closest('button'); if(!b) return;
+  view = b.dataset.view; pressed(b.parentNode, b);
+});
+
 function setPaused(p){ paused = p; $('btnPause').textContent = p ? 'Resume' : 'Pause'; $('live').textContent = p ? 'Simulation paused' : 'Simulation running'; }
 function doReset(){ views.forEach(v => v.sim.reset()); setPaused(false); renderAll(); }
 function sendAmbulance(){
@@ -1298,7 +1435,7 @@ function frame(now){
     while(acc >= DT && n < 1200){ for(const v of views) v.sim.step(DT); acc -= DT; n++; }
     if(n >= 1200) acc = 0;
   }
-  for(const v of views) draw(v);
+  for(const v of views) (view === '3d' ? draw3d : draw2d)(v);
   uiT += dt; if(uiT > 0.2){ uiT = 0; renderAll(); announceLamps(); }
   requestAnimationFrame(frame);
 }
